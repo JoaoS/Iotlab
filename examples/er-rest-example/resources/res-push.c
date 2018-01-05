@@ -49,7 +49,7 @@ PERIODIC_RESOURCE(res_push,
                   NULL,
                   NULL,
                   NULL,
-                  5 * CLOCK_SECOND,
+                  20 * CLOCK_SECOND,
                   res_periodic_handler);
 
 /*
@@ -60,15 +60,17 @@ static int32_t event_counter = 0;
 static void
 res_get_handler(void *request, void *response, uint8_t *buffer, uint16_t preferred_size, int32_t *offset)
 {
+  //++event_counter;
   /*
    * For minimal complexity, request query and options should be ignored for GET on observable resources.
    * Otherwise the requests must be stored with the observer list and passed by REST.notify_subscribers().
    * This would be a TODO in the corresponding files in contiki/apps/erbium/!
    */
+  //printf("message counter=%u\n",event_counter );
   REST.set_header_content_type(response, REST.type.TEXT_PLAIN);
   REST.set_header_max_age(response, res_push.periodic->period / CLOCK_SECOND);
   REST.set_response_payload(response, buffer, snprintf((char *)buffer, preferred_size, "VERY LONG EVENT %lu", event_counter));
-
+  //printf("VERY LONG EVENT %lu\n",event_counter );
   /* The REST.subscription_handler() will be called for observable resources by the REST framework. */
 }
 /*

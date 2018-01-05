@@ -42,7 +42,7 @@
 #include "contiki.h"
 #include "rest-engine.h"
 
-#define DEBUG 0
+#define DEBUG 1
 #if DEBUG
 #include <stdio.h>
 #define PRINTF(...) printf(__VA_ARGS__)
@@ -131,7 +131,7 @@ rest_get_resources(void)
 {
   return restful_services;
 }
-/*---------------------------------------------------------------------------*/
+/*---------------------------------------------------------------------------*//*densenet get value from resource*/
 int
 rest_invoke_restful_service(void *request, void *response, uint8_t *buffer,
                             uint16_t buffer_size, int32_t *offset)

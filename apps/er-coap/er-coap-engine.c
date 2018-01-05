@@ -42,7 +42,7 @@
 #include <string.h>
 #include "er-coap-engine.h"
 
-#define DEBUG 0
+#define DEBUG 0 /*densenet*/
 #if DEBUG
 #include <stdio.h>
 #define PRINTF(...) printf(__VA_ARGS__)
@@ -126,7 +126,7 @@ coap_receive(void)
                (message, &block_num, NULL, &block_size, &block_offset)) {
             PRINTF("Blockwise: block request %lu (%u/%u) @ %lu bytes\n",
                    block_num, block_size, COAP_MAX_BLOCK_SIZE, block_offset);
-            block_size = MIN(block_size, COAP_MAX_BLOCK_SIZE);
+            block_size = MIN(block_size, COAP_MAX_BLOCK_SIZE); /*densenet: mudar tamanho aqui para evitar blockwise*/
             new_offset = block_offset;
           }
 
@@ -232,7 +232,7 @@ coap_receive(void)
           erbium_status_code = PING_RESPONSE;
         } else if(message->type == COAP_TYPE_ACK) {
           /* transactions are closed through lookup below */
-          PRINTF("Received ACK\n");
+          PRINTF("Received ACK\n"); /*densenet, recebeu ack aqui*/
         } else if(message->type == COAP_TYPE_RST) {
           PRINTF("Received RST\n");
           /* cancel possible subscriptions */

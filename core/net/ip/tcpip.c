@@ -38,6 +38,7 @@
  * \author  Julien Abeille <jabeille@cisco.com> (IPv6 related code)
  */
 
+
 #include "contiki-net.h"
 #include "net/ip/uip-split.h"
 #include "net/ip/uip-packetqueue.h"
@@ -76,6 +77,26 @@ extern struct uip_fallback_interface UIP_FALLBACK_INTERFACE;
 #if UIP_CONF_IPV6_RPL
 #include "rpl/rpl.h"
 #endif
+
+
+#if NETWORK_CODING /*densenet*/
+#include "examples/er-rest-example/ncoding.h"
+#include "apps/er-coap/er-coap.h"
+#include "apps/rest-engine/rest-engine.h"
+#include "contiki.h"
+#include <stdlib.h>
+#define REQUEST_NODE(ipaddr)   uip_ip6addr(ipaddr, 0xfd00, 0, 0, 0, 0, 0, 0 , 0x0001)      /* cooja2 */
+uip_ipaddr_t server_ipaddr;
+int id_node;
+static void
+print_ipv6_addr(const uip_ipaddr_t *ip_addr) {
+    int i;
+    for (i = 0; i < 16; i++) {
+        printf("%02x", ip_addr->u8[i]);
+    }
+}
+#endif
+
 
 process_event_t tcpip_event;
 #if UIP_CONF_ICMP6
@@ -203,6 +224,25 @@ packet_input(void)
 
     check_for_tcp_syn();
     uip_input();
+ 
+#if NETWORK_CODING
+    /*parsing da mensagem, 
+    * armazenar oayload e mid no buffer
+    * enviar depois caso o rank do rpl seja o que se quer
+    */
+    if (id_node == 2) { 
+      //ver se destino e fd00::::1
+      //PRESERVAR mid E VALOR 
+
+      REQUEST_NODE(&server_ipaddr);
+      if(uip_ip6addr_cmp(&server_ipaddr,&UIP_IP_BUF->destipaddr) && !uip_ds6_is_my_addr(&UIP_IP_BUF->srcipaddr)){ 
+        //printf("TESTE\n");
+        store_msg();
+     }
+    }
+#endif
+
+
     if(uip_len > 0) {
 #if UIP_CONF_TCP_SPLIT
       uip_split_output();
@@ -847,3 +887,29 @@ PROCESS_THREAD(tcpip_process, ev, data)
   PROCESS_END();
 }
 /*---------------------------------------------------------------------------*/
+
+#if NETWORK_CODING   
+void 
+store_msg(void){
+
+  /* This is a definition put in Contiki/platform/wismote/platform-conf.c. Sky motes do not have enough memory to implement Aggregation. */
+    //is my packet uip_ds6_is_my_addr(&UIP_IP_BUF->srcipaddr)
+    static coap_packet_t coap_pt[1];    //allocate space for 1 packet
+    unsigned int begin_payload_index=UIP_IPUDPH_LEN+8;  // For some reason the forwarded packet has 8 more bytes
+    coap_parse_message(coap_pt, &uip_buf[begin_payload_index], uip_datalen());
+
+    if(coap_pt->code==69 && coap_pt->version ==1){
+    
+      add_payload(coap_pt->payload, coap_pt->mid, (uint8_t) uip_datalen()-coap_pt->payload_len);
+      PRINTF("Added message to buffer");
+
+
+      /* Drop all not self-produced packets., NOT IN THIS CASE WITH CODING
+      uip_len = 0;
+      uip_ext_len = 0;
+      uip_flags = 0;
+      return;*/
+    } 
+
+}
+#endif

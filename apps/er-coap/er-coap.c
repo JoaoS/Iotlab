@@ -45,7 +45,7 @@
 #include "er-coap.h"
 #include "er-coap-transactions.h"
 
-#define DEBUG 0
+#define DEBUG 0 /*densenet*/
 #if DEBUG
 #include <stdio.h>
 #define PRINTF(...) printf(__VA_ARGS__)
@@ -443,6 +443,7 @@ coap_status_t
 coap_parse_message(void *packet, uint8_t *data, uint16_t data_len)
 {
   coap_packet_t *const coap_pkt = (coap_packet_t *)packet;
+
 
   /* initialize packet */
   memset(coap_pkt, 0, sizeof(coap_packet_t));

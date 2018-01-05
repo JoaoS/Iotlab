@@ -40,7 +40,7 @@
 #include <string.h>
 #include "er-coap-observe.h"
 
-#define DEBUG 0
+#define DEBUG 1
 #if DEBUG
 #include <stdio.h>
 #define PRINTF(...) printf(__VA_ARGS__)
@@ -58,7 +58,7 @@ LIST(observers_list);
 /*---------------------------------------------------------------------------*/
 /*- Internal API ------------------------------------------------------------*/
 /*---------------------------------------------------------------------------*/
-static coap_observer_t *
+ coap_observer_t *
 add_observer(uip_ipaddr_t *addr, uint16_t port, const uint8_t *token,
              size_t token_len, const char *uri, int uri_len)
 {
@@ -205,7 +205,7 @@ coap_notify_observers_sub(resource_t *resource, const char *subpath)
   /* url now contains the notify URL that needs to match the observer */
   PRINTF("Observe: Notification from %s\n", url);
 
-  coap_init_message(notification, COAP_TYPE_NON, CONTENT_2_05, 0);
+  coap_init_message(notification, COAP_TYPE_NON, CONTENT_2_05, 0); /*densenet: editei aqui para notificações confirmáveis*/
   /* create a "fake" request for the URI */
   coap_init_message(request, COAP_TYPE_CON, COAP_GET, 0);
   coap_set_header_uri_path(request, url);
@@ -228,7 +228,11 @@ coap_notify_observers_sub(resource_t *resource, const char *subpath)
       /*TODO implement special transaction for CON, sharing the same buffer to allow for more observers */
 
       if((transaction = coap_new_transaction(coap_get_mid(), &obs->addr, obs->port))) {
+        
+        /*densenet temporary deactivate confirmable*/
+
         if(obs->obs_counter % COAP_OBSERVE_REFRESH_INTERVAL == 0) {
+          PRINTF(" temporary deactivation of confirmable\n");
           PRINTF("           Force Confirmable for\n");
           notification->type = COAP_TYPE_CON;
         }
@@ -245,7 +249,7 @@ coap_notify_observers_sub(resource_t *resource, const char *subpath)
 
         resource->get_handler(request, notification,
                               transaction->packet + COAP_MAX_HEADER_SIZE,
-                              REST_MAX_CHUNK_SIZE, NULL);
+                              REST_MAX_CHUNK_SIZE, NULL); /*densenet: tamanho para o buffer da mensagem*/
 
         if(notification->code < BAD_REQUEST_4_00) {
           coap_set_header_observe(notification, (obs->obs_counter)++);

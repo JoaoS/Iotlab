@@ -39,6 +39,14 @@
 #ifndef __PROJECT_ERBIUM_CONF_H__
 #define __PROJECT_ERBIUM_CONF_H__
 
+/*densenet: network coding mechanism*/
+/*add files for packet capturing and network coding functions*/
+#define NETWORK_CODING 1   /*activates packet capturing and network coding mechanism */
+#define MAX_N_PAYLOADS 5   /*maximum number of concurrent messages stored in buffer*/
+#undef MAX_N_PAYLOADS 
+#define MAX_N_PAYLOADS 10
+
+
 /* Custom channel and PAN ID configuration for your project. */
 /*
    #undef RF_CHANNEL
@@ -72,7 +80,7 @@
 
 /* Increase rpl-border-router IP-buffer when using more than 64. */
 #undef REST_MAX_CHUNK_SIZE
-#define REST_MAX_CHUNK_SIZE            48
+#define REST_MAX_CHUNK_SIZE            64 /*densenet: antes era 48*/
 
 /* Estimate your header size, especially when using Proxy-Uri. */
 /*

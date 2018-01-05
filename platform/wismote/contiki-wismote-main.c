@@ -282,6 +282,8 @@ main(int argc, char **argv)
   printf(CONTIKI_VERSION_STRING " started. ");
   if(node_id > 0) {
     printf("Node id is set to %u.\n", node_id);
+    id_node = node_id;/*densenet*/
+
   } else {
     printf("Node id is not set.\n");
   }

@@ -42,6 +42,10 @@
 #include "contiki.h"
 #include "contiki-net.h"
 #include "rest-engine.h"
+#include "er-coap-observe.h"
+#include "sys/etimer.h"
+
+
 
 #if PLATFORM_HAS_BUTTON
 #include "dev/button-sensor.h"
@@ -65,6 +69,7 @@
  */
 extern resource_t
   res_hello,
+  res_coded,
   res_mirror,
   res_chunks,
   res_separate,
@@ -131,11 +136,13 @@ PROCESS_THREAD(er_example_server, ev, data)
    * WARNING: Activating twice only means alternate path, not two instances!
    * All static variables are the same for each URI path.
    */
+  rest_activate_resource(&res_coded, "test/coded");
   rest_activate_resource(&res_hello, "test/hello");
+
 /*  rest_activate_resource(&res_mirror, "debug/mirror"); */
 /*  rest_activate_resource(&res_chunks, "test/chunks"); */
 /*  rest_activate_resource(&res_separate, "test/separate"); */
-  rest_activate_resource(&res_push, "test/push");
+  //rest_activate_resource(&res_push, "test/push");
 /*  rest_activate_resource(&res_event, "sensors/button"); */
 /*  rest_activate_resource(&res_sub, "test/sub"); */
 /*  rest_activate_resource(&res_b1_sep_b2, "test/b1sepb2"); */
@@ -164,7 +171,32 @@ PROCESS_THREAD(er_example_server, ev, data)
   rest_activate_resource(&res_sht11, "sensors/sht11");  
   SENSORS_ACTIVATE(sht11_sensor);  
 #endif
-*/
+*/ 
+  /*************************densenet/**************************/
+if (id_node >=2){
+  static struct etimer add_obs_timer;
+  etimer_set(&add_obs_timer, CLOCK_SECOND*15); // set timer to add the observers
+  PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&add_obs_timer));
+/* chamada para add observer */
+  static uint16_t addr_test[8];
+  //uint16_t port_test=60052;
+  uip_ipaddr_t dest_addr;
+  //const char *uri="test/hello";
+
+    addr_test[0] = 0xfd00;
+    addr_test[4] = 0x200;
+    addr_test[5] = 0x7401;
+    addr_test[6] = 0x0000;
+    addr_test[7] = 0x0001;
+    
+    uip_ip6addr(&dest_addr, addr_test[0], addr_test[1], addr_test[2],
+    addr_test[3], addr_test[4],addr_test[5],addr_test[6],addr_test[7]);
+  
+    printf("Calling coap_add_observer \n");
+    add_observer(&dest_addr,0,0,0,"test/coded",13);
+  }
+  /*************************densenet/**************************/
+
 
   /* Define application-specific events here. */
   while(1) {

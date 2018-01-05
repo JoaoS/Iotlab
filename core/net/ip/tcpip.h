@@ -88,6 +88,11 @@ typedef struct tcpip_uipstate uip_icmp6_appstate_t;
 #include "net/ip/uip.h"
 void tcpip_uipcall(void);
 
+#if NETWORK_CODING   
+void store_msg(void);
+#endif
+
+
 /**
  * \name TCP functions
  * @{
