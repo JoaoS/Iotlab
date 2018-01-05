@@ -27,4 +27,5 @@ static aggPayloads Message_list={0};
 
 /*functions*/
 
+/*add payload to buffer*/
 void add_payload(uint8_t *incomingPayload, uint16_t mid,uint8_t len );
