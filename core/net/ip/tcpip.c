@@ -78,8 +78,8 @@ extern struct uip_fallback_interface UIP_FALLBACK_INTERFACE;
 #include "rpl/rpl.h"
 #endif
 
-
 #if NETWORK_CODING /*densenet*/
+PROCESS_NAME(er_example_server);
 #include "examples/er-rest-example/ncoding.h"
 #include "apps/er-coap/er-coap.h"
 #include "apps/rest-engine/rest-engine.h"
@@ -890,8 +890,9 @@ PROCESS_THREAD(tcpip_process, ev, data)
 
 #if NETWORK_CODING   
 void 
-store_msg(void){
+store_msg(void){  
 
+     static char msg[]="oi";
   /* This is a definition put in Contiki/platform/wismote/platform-conf.c. Sky motes do not have enough memory to implement Aggregation. */
     //is my packet uip_ds6_is_my_addr(&UIP_IP_BUF->srcipaddr)
     static coap_packet_t coap_pt[1];    //allocate space for 1 packet
@@ -902,8 +903,10 @@ store_msg(void){
     
       add_payload(coap_pt->payload, coap_pt->mid, (uint8_t) uip_datalen()-coap_pt->payload_len);
       PRINTF("Added message to buffer");
-
-
+    
+      /*post asynchronous event to send coded message*/
+      process_post(&er_example_server,
+                coding_event, msg);
       /* Drop all not self-produced packets., NOT IN THIS CASE WITH CODING
       uip_len = 0;
       uip_ext_len = 0;

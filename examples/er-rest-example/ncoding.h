@@ -7,9 +7,10 @@
  */
 
 
-
 /*create struct to store message value and ID for later coding*/
-typedef struct{
+
+
+typedef struct {
 	uint8_t message_value[2];
 	uint16_t mid;
 }singleMessage;
@@ -22,8 +23,7 @@ typedef struct{
 
 static aggPayloads Message_list={0};
 
-
-
+process_event_t coding_event;
 
 /*functions*/
 

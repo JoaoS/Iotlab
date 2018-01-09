@@ -14,6 +14,8 @@
 #define PRINTF(...)
 #endif
 
+
+
 /*The first call to this function is when a packet is produced, so it initializes at 0*/
 void reset_payloads(){
 	int i;
@@ -37,7 +39,7 @@ void add_payload(uint8_t *incomingPayload, uint16_t mid, uint8_t len ){
 }
 
 /*network code one message*/
-void code_and_send()
+/*void code_and_send()*/
 
 
 

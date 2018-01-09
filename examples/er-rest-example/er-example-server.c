@@ -51,6 +51,10 @@
 #include "dev/button-sensor.h"
 #endif
 
+#if NETWORK_CODING /*densenet*/
+#include "examples/er-rest-example/ncoding.h"
+#endif
+
 #define DEBUG 0
 #if DEBUG
 #include <stdio.h>
@@ -143,7 +147,7 @@ PROCESS_THREAD(er_example_server, ev, data)
 /*  rest_activate_resource(&res_chunks, "test/chunks"); */
 /*  rest_activate_resource(&res_separate, "test/separate"); */
   //rest_activate_resource(&res_push, "test/push");
-/*  rest_activate_resource(&res_event, "sensors/button"); */
+  rest_activate_resource(&res_event, "sensors/button"); 
 /*  rest_activate_resource(&res_sub, "test/sub"); */
 /*  rest_activate_resource(&res_b1_sep_b2, "test/b1sepb2"); */
 #if PLATFORM_HAS_LEDS
@@ -197,10 +201,21 @@ if (id_node >=2){
   }
   /*************************densenet/**************************/
 
-
   /* Define application-specific events here. */
   while(1) {
     PROCESS_WAIT_EVENT();
+
+    
+
+    if (ev == coding_event)
+    {
+        printf("FUI CHAMADO=%s!!!!!!!!!!!!!!!!!\n",data);    
+    }
+
+
+
+
+
 #if PLATFORM_HAS_BUTTON
     if(ev == sensors_event && data == &button_sensor) {
       PRINTF("*******BUTTON*******\n");
