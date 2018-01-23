@@ -205,9 +205,9 @@ coap_notify_observers_sub(resource_t *resource, const char *subpath)
   /* url now contains the notify URL that needs to match the observer */
   PRINTF("Observe: Notification from %s\n", url);
 
-  coap_init_message(notification, COAP_TYPE_NON, CONTENT_2_05, 0); /*densenet: editei aqui para notificações confirmáveis*/
+  coap_init_message(notification, COAP_TYPE_NON, CONTENT_2_05, 0); /*densenet: editei aqui para notificações nao confirmáveis*/
   /* create a "fake" request for the URI */
-  coap_init_message(request, COAP_TYPE_CON, COAP_GET, 0);
+  coap_init_message(request, COAP_TYPE_CON, COAP_GET, 0);   /*densenet: editei aqui para notificações nao confirmáveis*/
   coap_set_header_uri_path(request, url);
 
   /* iterate over observers */
@@ -230,12 +230,12 @@ coap_notify_observers_sub(resource_t *resource, const char *subpath)
       if((transaction = coap_new_transaction(coap_get_mid(), &obs->addr, obs->port))) {
         
         /*densenet temporary deactivate confirmable*/
-
+        /*
         if(obs->obs_counter % COAP_OBSERVE_REFRESH_INTERVAL == 0) {
           PRINTF(" temporary deactivation of confirmable\n");
           PRINTF("           Force Confirmable for\n");
           notification->type = COAP_TYPE_CON;
-        }
+        }*/
 
         PRINTF("           Observer ");
         PRINT6ADDR(&obs->addr);

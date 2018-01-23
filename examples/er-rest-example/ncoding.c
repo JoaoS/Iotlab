@@ -14,6 +14,10 @@
 #define PRINTF(...)
 #endif
 
+static aggPayloads Message_list={0};
+
+PROCESS_NAME(er_example_server);
+static char msg[]="oi";
 
 
 /*The first call to this function is when a packet is produced, so it initializes at 0*/
@@ -32,10 +36,28 @@ void reset_payloads(){
 /**/
 void add_payload(uint8_t *incomingPayload, uint16_t mid, uint8_t len ){
 
+	printf("len payload (ncoding)=%u\n",len );
+
 	memcpy(Message_list.message_array[Message_list.count_payloads].message_value,incomingPayload, len);
 	Message_list.message_array[Message_list.count_payloads].mid = mid;
-	PRINTF("mid=%u valor=%c%c\n",Message_list.message_array[Message_list.count_payloads].mid,Message_list.message_array[Message_list.count_payloads].message_value[Message_list.count_payloads],Message_list.message_array[0].message_value[1]);
+	
+
+	#if DEBUG
+	uint8_t * number_value = &Message_list.message_array[Message_list.count_payloads].message_value;
+	PRINTF("len pacote= %u, mid=%u valor= %c %c\n",len,Message_list.message_array[Message_list.count_payloads].mid,      
+		number_value[0],number_value[1]);
+	printf("size pacote=%u\n",sizeof(incomingPayload) );
+	#endif
+
 	Message_list.count_payloads+=1;
+	/*base cenario 2 packets, send the coded message after*/
+	if (Message_list.count_payloads == 2 )
+	{
+		printf("nr mensagens =%d\n",Message_list.count_payloads );
+
+		/*post asynchronous event to send coded message*/
+      	process_post(&er_example_server,coding_event, msg);
+	}
 }
 
 /*network code one message*/

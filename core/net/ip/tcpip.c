@@ -79,7 +79,6 @@ extern struct uip_fallback_interface UIP_FALLBACK_INTERFACE;
 #endif
 
 #if NETWORK_CODING /*densenet*/
-PROCESS_NAME(er_example_server);
 #include "examples/er-rest-example/ncoding.h"
 #include "apps/er-coap/er-coap.h"
 #include "apps/rest-engine/rest-engine.h"
@@ -226,10 +225,6 @@ packet_input(void)
     uip_input();
  
 #if NETWORK_CODING
-    /*parsing da mensagem, 
-    * armazenar oayload e mid no buffer
-    * enviar depois caso o rank do rpl seja o que se quer
-    */
     if (id_node == 2) { 
       //ver se destino e fd00::::1
       //PRESERVAR mid E VALOR 
@@ -890,29 +885,35 @@ PROCESS_THREAD(tcpip_process, ev, data)
 
 #if NETWORK_CODING   
 void 
-store_msg(void){  
-
-     static char msg[]="oi";
+store_msg(void){ 
+  int i=0; 
   /* This is a definition put in Contiki/platform/wismote/platform-conf.c. Sky motes do not have enough memory to implement Aggregation. */
-    //is my packet uip_ds6_is_my_addr(&UIP_IP_BUF->srcipaddr)
-    static coap_packet_t coap_pt[1];    //allocate space for 1 packet
-    unsigned int begin_payload_index=UIP_IPUDPH_LEN+8;  // For some reason the forwarded packet has 8 more bytes
-    coap_parse_message(coap_pt, &uip_buf[begin_payload_index], uip_datalen());
+  //is my packet uip_ds6_is_my_addr(&UIP_IP_BUF->srcipaddr)
+  static coap_packet_t coap_pt[1];    //allocate space for 1 packet, treat as pointer
+  unsigned int begin_payload_index=UIP_IPUDPH_LEN+8;  // For some reason the forwarded packet has 8 more bytes
+   
+  /*IMPORTANT, because of max packet size in REST_MAX_CHUNK_SIZE tha max size of parsed packet is that value*/
+  /*This function is used in coap receive, the size given (arg3) has to be the size of ONLY the coap packet*/
+  coap_parse_message(coap_pt, &uip_buf[begin_payload_index], uip_datalen()-begin_payload_index);
 
-    if(coap_pt->code==69 && coap_pt->version ==1){
-    
-      add_payload(coap_pt->payload, coap_pt->mid, (uint8_t) uip_datalen()-coap_pt->payload_len);
-      PRINTF("Added message to buffer");
-    
-      /*post asynchronous event to send coded message*/
-      process_post(&er_example_server,
-                coding_event, msg);
-      /* Drop all not self-produced packets., NOT IN THIS CASE WITH CODING
-      uip_len = 0;
-      uip_ext_len = 0;
-      uip_flags = 0;
-      return;*/
-    } 
+  //printf("len var salto=%d, ip+udp=%d begin_payload_index=%d\n",UIP_LLH_LEN,UIP_IPUDPH_LEN,begin_payload_index);
+
+  if(coap_pt->code==69 && coap_pt->version ==1){
+
+    /*check if message has been  coded, extra precaution*/
+    //printf("yoyoyo=len%u %u %02x\n", coap_pt->etag_len, coap_pt->etag[0], *(coap_pt->etag));
+    if(!IS_OPTION(coap_pt, COAP_OPTION_ETAG)) {
+          PRINTF("storing message, etag= %u\n",coap_pt->etag);
+          add_payload(coap_pt->payload, coap_pt->mid, (uint8_t)coap_pt->payload_len);
+  }
+      
+  printf("Added message to buffer");
+  /* Drop all not self-produced packets., NOT IN THIS CASE WITH CODING
+  uip_len = 0;
+  uip_ext_len = 0;
+  uip_flags = 0;
+  return;*/
+  } 
 
 }
 #endif

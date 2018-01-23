@@ -53,22 +53,18 @@ res_get_handler(void *request, void *response, uint8_t *buffer, uint16_t preferr
    */
   //REST.set_header_content_type(response, REST.type.TEXT_PLAIN);
   //REST.set_header_max_age(response, res_push.periodic->period / CLOCK_SECOND);
-
   
   if (id_node == 2 ) { 
     printf("coding the message\n");
-
   }
-
-  //else{
+  
+  else{
   temperature = 1+ random_rand() % 35;
+  //REST.set_header_etag(response, (uint8_t *)&seed, 1);/*this signals the message has been coded*/
   PRINTF("Prefered size =%u\ntemperature = %u\n",preferred_size, temperature);
   REST.set_response_payload(response, buffer, snprintf((char *)buffer, preferred_size, "%u", temperature));
-
-
-  //}
+  }
  
-  //REST.set_header_etag(response, (uint8_t *)&seed, 1); us
   //printf("VERY LONG EVENT %lu\n",event_counter );
   /* The REST.subscription_handler() will be called for observable resources by the REST framework. */
  

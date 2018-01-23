@@ -21,9 +21,8 @@ typedef struct{
 	singleMessage message_array[MAX_N_PAYLOADS];	
 }aggPayloads;
 
-static aggPayloads Message_list={0};
 
-process_event_t coding_event;
+process_event_t coding_event; /*event to signal a coded message is ready to be sent*/
 
 /*functions*/
 

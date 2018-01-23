@@ -140,14 +140,13 @@ PROCESS_THREAD(er_example_server, ev, data)
    * WARNING: Activating twice only means alternate path, not two instances!
    * All static variables are the same for each URI path.
    */
-  rest_activate_resource(&res_coded, "test/coded");
   rest_activate_resource(&res_hello, "test/hello");
 
 /*  rest_activate_resource(&res_mirror, "debug/mirror"); */
 /*  rest_activate_resource(&res_chunks, "test/chunks"); */
 /*  rest_activate_resource(&res_separate, "test/separate"); */
   //rest_activate_resource(&res_push, "test/push");
-  rest_activate_resource(&res_event, "sensors/button"); 
+/*  rest_activate_resource(&res_event, "sensors/button"); */
 /*  rest_activate_resource(&res_sub, "test/sub"); */
 /*  rest_activate_resource(&res_b1_sep_b2, "test/b1sepb2"); */
 #if PLATFORM_HAS_LEDS
@@ -176,7 +175,14 @@ PROCESS_THREAD(er_example_server, ev, data)
   SENSORS_ACTIVATE(sht11_sensor);  
 #endif
 */ 
-  /*************************densenet/**************************/
+  /*************************densenet**************************/
+  if (id_node == 3){
+  rest_activate_resource(&res_coded, "test/coded");/*activate the resouce we want*/
+ }
+   if (id_node == 2){
+ rest_activate_resource(&res_event, "test/button"); //separate channel for 
+ }
+#if PERIODIC_MESSAGE
 if (id_node >=2){
   static struct etimer add_obs_timer;
   etimer_set(&add_obs_timer, CLOCK_SECOND*15); // set timer to add the observers
@@ -197,19 +203,24 @@ if (id_node >=2){
     addr_test[3], addr_test[4],addr_test[5],addr_test[6],addr_test[7]);
   
     printf("Calling coap_add_observer \n");
-    add_observer(&dest_addr,0,0,0,"test/coded",13);
+    add_observer(&dest_addr,0,0,0,"test/coded",11);
+    add_observer(&dest_addr,0,0,0,"test/button",12);
+
   }
-  /*************************densenet/**************************/
+#endif
+  /*************************densenet**************************/
 
   /* Define application-specific events here. */
   while(1) {
     PROCESS_WAIT_EVENT();
 
     
-
+    /*prepare new message and send it to external IP address*/
     if (ev == coding_event)
     {
-        printf("FUI CHAMADO=%s!!!!!!!!!!!!!!!!!\n",data);    
+     printf("yoyoyoyo\n");
+     res_event.trigger();
+
     }
 
 
