@@ -42,8 +42,6 @@
 #include "contiki.h"
 #include "contiki-net.h"
 #include "rest-engine.h"
-#include "er-coap-observe.h"
-#include "sys/etimer.h"
 
 
 
@@ -176,16 +174,11 @@ PROCESS_THREAD(er_example_server, ev, data)
 #endif
 */ 
   /*************************densenet**************************/
-  if (id_node == 3){
-  rest_activate_resource(&res_coded, "test/coded");/*activate the resouce we want*/
- }
-   if (id_node == 2){
- rest_activate_resource(&res_event, "test/button"); //separate channel for 
- }
 #if PERIODIC_MESSAGE
-if (id_node >=2){
+if (id_node > 2){
+  rest_activate_resource(&res_coded, "coded");/*activate the resouce we want*/   
   static struct etimer add_obs_timer;
-  etimer_set(&add_obs_timer, CLOCK_SECOND*15); // set timer to add the observers
+  etimer_set(&add_obs_timer, CLOCK_SECOND*25); // set timer to add the observers
   PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&add_obs_timer));
 /* chamada para add observer */
   static uint16_t addr_test[8];
@@ -194,17 +187,16 @@ if (id_node >=2){
   //const char *uri="test/hello";
 
     addr_test[0] = 0xfd00;
-    addr_test[4] = 0x200;
-    addr_test[5] = 0x7401;
-    addr_test[6] = 0x0000;
+    addr_test[4] = 0x0000;
+    addr_test[5] = 0x0000;
+    addr_test[6] = 0x9000;
     addr_test[7] = 0x0001;
     
     uip_ip6addr(&dest_addr, addr_test[0], addr_test[1], addr_test[2],
     addr_test[3], addr_test[4],addr_test[5],addr_test[6],addr_test[7]);
   
     printf("Calling coap_add_observer \n");
-    add_observer(&dest_addr,0,0,0,"test/coded",11);
-    add_observer(&dest_addr,0,0,0,"test/button",12);
+    add_observer(&dest_addr,0,0,0,"coded",5);
 
   }
 #endif
@@ -216,16 +208,12 @@ if (id_node >=2){
 
     
     /*prepare new message and send it to external IP address*/
-    if (ev == coding_event)
-    {
-     printf("yoyoyoyo\n");
-     res_event.trigger();
+    if (ev == coding_event ){
+      printf(" coding event received \n");
+      //send coded message, located in nconding file
+      send_coded(&res_coded);
 
     }
-
-
-
-
 
 #if PLATFORM_HAS_BUTTON
     if(ev == sensors_event && data == &button_sensor) {

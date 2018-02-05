@@ -84,7 +84,8 @@ extern struct uip_fallback_interface UIP_FALLBACK_INTERFACE;
 #include "apps/rest-engine/rest-engine.h"
 #include "contiki.h"
 #include <stdlib.h>
-#define REQUEST_NODE(ipaddr)   uip_ip6addr(ipaddr, 0xfd00, 0, 0, 0, 0, 0, 0 , 0x0001)      /* cooja2 */
+#define REQUEST_NODE(ipaddr)   uip_ip6addr(ipaddr, 0xfd00, 0, 0, 0, 0, 0, 0x9000 , 0x0001)      /* cooja2 */
+//#define REQUEST_NODE(ipaddr)   uip_ip6addr(ipaddr, 0xfd00, 0, 0, 0, 0, 0, 0 , 0x0001)      /* cooja2 */
 uip_ipaddr_t server_ipaddr;
 int id_node;
 static void
@@ -226,9 +227,7 @@ packet_input(void)
  
 #if NETWORK_CODING
     if (id_node == 2) { 
-      //ver se destino e fd00::::1
-      //PRESERVAR mid E VALOR 
-
+      //save message if destination is the external observer given in er-example, if the server ip is fd00::::1 it activates the web browser requests
       REQUEST_NODE(&server_ipaddr);
       if(uip_ip6addr_cmp(&server_ipaddr,&UIP_IP_BUF->destipaddr) && !uip_ds6_is_my_addr(&UIP_IP_BUF->srcipaddr)){ 
         //printf("TESTE\n");
@@ -883,37 +882,35 @@ PROCESS_THREAD(tcpip_process, ev, data)
 }
 /*---------------------------------------------------------------------------*/
 
-#if NETWORK_CODING   
+#if NETWORK_CODING 
+/* extrat coap payloads and keep them until its time, this message is when ncoding file decides*/
 void 
-store_msg(void){ 
-  int i=0; 
+store_msg(void){
+  //static target_etag=""
   /* This is a definition put in Contiki/platform/wismote/platform-conf.c. Sky motes do not have enough memory to implement Aggregation. */
   //is my packet uip_ds6_is_my_addr(&UIP_IP_BUF->srcipaddr)
   static coap_packet_t coap_pt[1];    //allocate space for 1 packet, treat as pointer
-  unsigned int begin_payload_index=UIP_IPUDPH_LEN+8;  // For some reason the forwarded packet has 8 more bytes
-   
+  static unsigned int begin_payload_index=UIP_IPUDPH_LEN+8;  // the forwarded packet has 8 more bytes(extension headers=uip_ext_len)
   /*IMPORTANT, because of max packet size in REST_MAX_CHUNK_SIZE tha max size of parsed packet is that value*/
   /*This function is used in coap receive, the size given (arg3) has to be the size of ONLY the coap packet*/
   coap_parse_message(coap_pt, &uip_buf[begin_payload_index], uip_datalen()-begin_payload_index);
-
-  //printf("len var salto=%d, ip+udp=%d begin_payload_index=%d\n",UIP_LLH_LEN,UIP_IPUDPH_LEN,begin_payload_index);
-
   if(coap_pt->code==69 && coap_pt->version ==1){
-
-    /*check if message has been  coded, extra precaution*/
-    //printf("yoyoyo=len%u %u %02x\n", coap_pt->etag_len, coap_pt->etag[0], *(coap_pt->etag));
-    if(!IS_OPTION(coap_pt, COAP_OPTION_ETAG)) {
-          PRINTF("storing message, etag= %u\n",coap_pt->etag);
-          add_payload(coap_pt->payload, coap_pt->mid, (uint8_t)coap_pt->payload_len);
-  }
       
-  printf("Added message to buffer");
-  /* Drop all not self-produced packets., NOT IN THIS CASE WITH CODING
-  uip_len = 0;
-  uip_ext_len = 0;
-  uip_flags = 0;
-  return;*/
-  } 
-
+    /*todo, messages from coded have etal of 0x0a, verify here if it is ok*/
+    if(IS_OPTION(coap_pt, COAP_OPTION_ETAG)) {
+      //printf("storing message, etag= %u\n",coap_pt->etag);
+      /*check correct etag from coded resource, is 10*/
+      if (((int)coap_pt->etag[0]==10))//etag will sufice, the ports change so do not use that, also they apear on the network order(reverse)
+      {
+        add_payload(coap_pt->payload, coap_pt->mid, (uint8_t)coap_pt->payload_len, &UIP_IP_BUF->destipaddr,UIP_UDP_BUF->destport);
+      }
+    }
+      /* Drop all not self-produced packets., NOT IN THIS CASE WITH CODING
+      uip_len = 0;
+      uip_ext_len = 0;
+      uip_flags = 0;
+      return;*/
+    } 
+    
 }
 #endif

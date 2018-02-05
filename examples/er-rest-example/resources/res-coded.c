@@ -11,7 +11,7 @@
 #include "rest-engine.h"
 #include "er-coap.h"
 #include "random.h"
-#include <ncoding.h>
+#include "ncoding.h"
 
 #define DEBUG 1
 #if DEBUG
@@ -32,14 +32,14 @@ PERIODIC_RESOURCE(res_coded,
                   NULL,
                   NULL,
                   NULL,
-                  20 * CLOCK_SECOND,
+                  15 * CLOCK_SECOND,
                   res_periodic_handler);
 
 /*
  * Use local resource state that is accessed by res_get_handler() and altered by res_periodic_handler() or PUT or POST.
  */
 static uint16_t event_counter = 0;
-static int seed = 15;
+static int seed = 10;
 static uint8_t temperature = 0;
 
 static void
@@ -60,7 +60,7 @@ res_get_handler(void *request, void *response, uint8_t *buffer, uint16_t preferr
   
   else{
   temperature = 1+ random_rand() % 35;
-  //REST.set_header_etag(response, (uint8_t *)&seed, 1);/*this signals the message has been coded*/
+  REST.set_header_etag(response, (uint8_t *)&seed, 1);/*this signals the message has been coded*/
   PRINTF("Prefered size =%u\ntemperature = %u\n",preferred_size, temperature);
   REST.set_response_payload(response, buffer, snprintf((char *)buffer, preferred_size, "%u", temperature));
   }
@@ -69,8 +69,6 @@ res_get_handler(void *request, void *response, uint8_t *buffer, uint16_t preferr
   /* The REST.subscription_handler() will be called for observable resources by the REST framework. */
  
 }
-
-
 
 
 /*

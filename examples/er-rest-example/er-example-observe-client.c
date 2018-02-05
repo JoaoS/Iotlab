@@ -67,13 +67,13 @@
 
 /*----------------------------------------------------------------------------*/
 /* FIXME: This server address is hard-coded for Cooja */
-#define SERVER_NODE(ipaddr)   uip_ip6addr(ipaddr, 0xfe80, 0, 0, 0, 0x0212, \
-                                          0x7402, 0x0002, 0x0202)
+#define SERVER_NODE(ipaddr)   uip_ip6addr(ipaddr, 0xfd00, 0, 0, 0, 0x200, \
+                                          0, 0, 0x0002)
 #define REMOTE_PORT     UIP_HTONS(COAP_DEFAULT_PORT)
 /* Toggle interval in seconds */
 #define TOGGLE_INTERVAL 30
 /* The path of the resource to observe */
-#define OBS_RESOURCE_URI "test/push"
+#define OBS_RESOURCE_URI "test/coded"
 
 /*----------------------------------------------------------------------------*/
 static uip_ipaddr_t server_ipaddr[1]; /* holds the server ip address */
