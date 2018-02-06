@@ -84,8 +84,8 @@ extern struct uip_fallback_interface UIP_FALLBACK_INTERFACE;
 #include "apps/rest-engine/rest-engine.h"
 #include "contiki.h"
 #include <stdlib.h>
-#define REQUEST_NODE(ipaddr)   uip_ip6addr(ipaddr, 0xfd00, 0, 0, 0, 0, 0, 0x9000 , 0x0001)      /* cooja2 */
-//#define REQUEST_NODE(ipaddr)   uip_ip6addr(ipaddr, 0xfd00, 0, 0, 0, 0, 0, 0 , 0x0001)      /* cooja2 */
+//#define REQUEST_NODE(ipaddr)   uip_ip6addr(ipaddr, 0xfd00, 0, 0, 0, 0, 0, 0x9000 , 0x0001)      /* cooja2 */
+#define REQUEST_NODE(ipaddr)   uip_ip6addr(ipaddr, 0xfd00, 0, 0, 0, 0, 0, 0 , 0x0001)      /* cooja2 */
 uip_ipaddr_t server_ipaddr;
 int id_node;
 static void

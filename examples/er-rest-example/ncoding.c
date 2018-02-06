@@ -23,10 +23,11 @@ static int totalcounter=0;
 
 /**/
 void add_payload(uint8_t *incomingPayload, uint16_t mid, uint8_t len, uip_ipaddr_t * destaddr, uint16_t dport ){
-
+	
 	s_message_t * message = memb_alloc(&coded_memb);
 	printf("Adding message=%d\n",totalcounter);
 	totalcounter++;
+
 	if (message)
 	{
 		memcpy(message->data,incomingPayload,len);
@@ -41,11 +42,8 @@ void add_payload(uint8_t *incomingPayload, uint16_t mid, uint8_t len, uip_ipaddr
 		printf("ERROR ALOCATING MEMORY FOR PACKET\n");
 
 	if(list_length(coded_list) % TRIGGERPACKETS == 0){//signal for coded message
-		PRINTF("len list = %d\n",list_length(coded_list));
-    printf("sending coding event\n");
-		process_post(&er_example_server,coding_event, msg);
+		process_post(&er_example_server,coding_event, NULL);
 	}
-
 }
 
 
@@ -76,13 +74,8 @@ void send_coded(resource_t *resource){
 
     }
     //clean buffer
-    destination=NULL;
-
-   for(destination = (s_message_t *)list_head(coded_list); list_length(coded_list) > 0 ;) {
-    	remove_element(destination);
-    }
-    
-
+		free_data();
+ 			PRINTF("free=%d\n",memb_numfree(&coded_memb));
 }
 
 
@@ -134,9 +127,26 @@ void create_xor(void *response, uint8_t *buffer, uint16_t preferred_size){
 	REST.set_response_payload(response, buffer, (mid_pointer)*sizeof(uint8_t));
 }
 
+void free_data(void){
+
+	static s_message_t * mlist=NULL;  
+
+ 	mlist=NULL;
+	mlist = (s_message_t *)list_head(coded_list);
+ 
+ 	for(mlist = (s_message_t *)list_head(coded_list); mlist->mid!=0 ;mlist=mlist->next) {
+    remove_element(mlist);
+  }
+}
+
+
+
 
 void remove_element(s_message_t * o){
-	PRINTF("remove element\n");
-	printf("dealoc=%d\n",memb_free(&coded_memb, o)); 
-  list_pop(coded_list); /*has to be pop so cycle does not loop*/
+	
+	//PRINTF("dealoc=%d, \n",memb_free(&coded_memb, list_pop(coded_list))); 
+	memb_free(&coded_memb, list_pop(coded_list));
+	//memb_free(&coded_list, o);
+  //list_remove(coded_list,o); /*has to be pop so cycle does not loop*/
+  
 }

@@ -174,9 +174,10 @@ PROCESS_THREAD(er_example_server, ev, data)
 #endif
 */ 
   /*************************densenet**************************/
-#if PERIODIC_MESSAGE
-if (id_node > 2){
   rest_activate_resource(&res_coded, "coded");/*activate the resouce we want*/   
+
+#if PERIODIC_MESSAGE
+if (id_node > 6){
   static struct etimer add_obs_timer;
   etimer_set(&add_obs_timer, CLOCK_SECOND*25); // set timer to add the observers
   PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&add_obs_timer));
@@ -209,7 +210,6 @@ if (id_node > 2){
     
     /*prepare new message and send it to external IP address*/
     if (ev == coding_event ){
-      printf(" coding event received \n");
       //send coded message, located in nconding file
       send_coded(&res_coded);
 

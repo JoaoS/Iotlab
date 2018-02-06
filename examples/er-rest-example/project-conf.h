@@ -44,7 +44,7 @@
 #define NETWORK_CODING 1   /*activates packet capturing and network coding mechanism */
 #define MAX_N_PAYLOADS 5   /*maximum number of concurrent messages stored in buffer*/
 #undef MAX_N_PAYLOADS 
-#define MAX_CODED_PAYLOADS 15  /* max number of packets in the buffer to code*/
+#define MAX_CODED_PAYLOADS 3  /* max number of packets in the buffer to code*/
 #define PERIODIC_MESSAGE 1 /*activate periodic resource for testing*/
 #define TRIGGERPACKETS 2 /*number of packets that trigger a coded message*/
 

@@ -34,3 +34,5 @@ void add_payload(uint8_t *incomingPayload, uint16_t mid, uint8_t len, uip_ipaddr
 void send_coded(resource_t *resource);
 void create_xor(void *response, uint8_t *buffer, uint16_t preferred_size);
 void remove_element(s_message_t * o);
+
+void free_data(void);
