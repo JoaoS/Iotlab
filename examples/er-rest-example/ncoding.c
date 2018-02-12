@@ -6,7 +6,7 @@
 #include "contiki.h"
 #include "ncoding.h"
 
-#define DEBUG 0
+#define DEBUG 1
 #if DEBUG
 #include <stdio.h>
 #define PRINTF(...) printf(__VA_ARGS__)
@@ -25,7 +25,7 @@ static int totalcounter=0;
 void add_payload(uint8_t *incomingPayload, uint16_t mid, uint8_t len, uip_ipaddr_t * destaddr, uint16_t dport ){
 	
 	s_message_t * message = memb_alloc(&coded_memb);
-	printf("Adding message=%d\n",totalcounter);
+	PRINTF("Adding message=%d\n",totalcounter);
 	totalcounter++;
 
 	if (message)
@@ -45,7 +45,6 @@ void add_payload(uint8_t *incomingPayload, uint16_t mid, uint8_t len, uip_ipaddr
 		process_post(&er_example_server,coding_event, NULL);
 	}
 }
-
 
 /*construct and send a coded message, clean stored data afterwards*/
 void send_coded(resource_t *resource){
@@ -77,8 +76,6 @@ void send_coded(resource_t *resource){
 		free_data();
  			PRINTF("free=%d\n",memb_numfree(&coded_memb));
 }
-
-
 
 void create_xor(void *response, uint8_t *buffer, uint16_t preferred_size){
 
@@ -139,14 +136,10 @@ void free_data(void){
   }
 }
 
-
-
-
 void remove_element(s_message_t * o){
 	
 	//PRINTF("dealoc=%d, \n",memb_free(&coded_memb, list_pop(coded_list))); 
 	memb_free(&coded_memb, list_pop(coded_list));
 	//memb_free(&coded_list, o);
-  //list_remove(coded_list,o); /*has to be pop so cycle does not loop*/
-  
+  //list_remove(coded_list,o); /*has to be pop so cycle does not loop*/  
 }
