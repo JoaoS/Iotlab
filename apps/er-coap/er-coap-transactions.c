@@ -58,7 +58,9 @@ MEMB(transactions_memb, coap_transaction_t, COAP_MAX_OPEN_TRANSACTIONS);
 LIST(transactions_list);
 
 static struct process *transaction_handler_process = NULL;
-
+unsigned int count_retrans=0;
+unsigned int count_ack=0;
+unsigned int total_coap_sent=0;
 /*---------------------------------------------------------------------------*/
 /*- Internal API ------------------------------------------------------------*/
 /*---------------------------------------------------------------------------*/
@@ -93,6 +95,8 @@ coap_send_transaction(coap_transaction_t *t)
 
   coap_send_message(&t->addr, t->port, t->packet, t->packet_len);
 
+  total_coap_sent++;
+  
   if(COAP_TYPE_CON ==
      ((COAP_HEADER_TYPE_MASK & t->packet[0]) >> COAP_HEADER_TYPE_POSITION)) {
     if(t->retrans_counter < COAP_MAX_RETRANSMIT) {
@@ -130,6 +134,7 @@ coap_send_transaction(coap_transaction_t *t)
       coap_clear_transaction(t);
 
       if(callback) {
+        printf("callback chamada\n");
         callback(callback_data, NULL);
       }
     }
@@ -143,7 +148,7 @@ coap_clear_transaction(coap_transaction_t *t)
 {
   if(t) {
     PRINTF("Freeing transaction %u: %p\n", t->mid, t);
-
+    count_ack++;/*densenet:*/
     etimer_stop(&t->retrans_timer);
     list_remove(transactions_list, t);
     memb_free(&transactions_memb, t);
@@ -170,6 +175,7 @@ coap_check_transactions()
 
   for(t = (coap_transaction_t *)list_head(transactions_list); t; t = t->next) {
     if(etimer_expired(&t->retrans_timer)) {
+      count_retrans++;
       ++(t->retrans_counter);
       PRINTF("Retransmitting %u (%u)\n", t->mid, t->retrans_counter);
       coap_send_transaction(t);

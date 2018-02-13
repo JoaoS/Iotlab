@@ -32,7 +32,7 @@ PERIODIC_RESOURCE(res_coded,
                   NULL,
                   NULL,
                   NULL,
-                  15 * CLOCK_SECOND,
+                  SEND_MESSAGE_INTERVAL * CLOCK_SECOND,
                   res_periodic_handler);
 
 /*

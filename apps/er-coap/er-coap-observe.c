@@ -40,7 +40,7 @@
 #include <string.h>
 #include "er-coap-observe.h"
 
-#define DEBUG 1
+#define DEBUG 0
 #if DEBUG
 #include <stdio.h>
 #define PRINTF(...) printf(__VA_ARGS__)
@@ -94,7 +94,7 @@ add_observer(uip_ipaddr_t *addr, uint16_t port, const uint8_t *token,
 void
 coap_remove_observer(coap_observer_t *o)
 {
-  PRINTF("Removing observer for /%s [0x%02X%02X]\n", o->url, o->token[0],
+  printf("Removing observer for /%s [0x%02X%02X]\n", o->url, o->token[0],
          o->token[1]);
 
   memb_free(&observers_memb, o);

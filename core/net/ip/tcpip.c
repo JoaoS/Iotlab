@@ -87,7 +87,6 @@ extern struct uip_fallback_interface UIP_FALLBACK_INTERFACE;
 //#define REQUEST_NODE(ipaddr)   uip_ip6addr(ipaddr, 0xfd00, 0, 0, 0, 0, 0, 0x9000 , 0x0001)      /* cooja2 */
 #define REQUEST_NODE(ipaddr)   uip_ip6addr(ipaddr, 0xfd00, 0, 0, 0, 0, 0, 0 , 0x0001)      /* cooja2 */
 uip_ipaddr_t server_ipaddr;
-int id_node;
 static void
 print_ipv6_addr(const uip_ipaddr_t *ip_addr) {
     int i;
@@ -96,6 +95,7 @@ print_ipv6_addr(const uip_ipaddr_t *ip_addr) {
     }
 }
 #endif
+int id_node; /*for cooja id nodes*/
 
 
 process_event_t tcpip_event;

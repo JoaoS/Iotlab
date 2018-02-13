@@ -33,8 +33,6 @@
  */
 #ifndef CONTIKI_H_
 #define CONTIKI_H_
-extern int id_node;
-
 
 #include "contiki-version.h"
 #include "contiki-conf.h"

@@ -41,13 +41,20 @@
 
 /*densenet: network coding mechanism*/
 /*add files for packet capturing and network coding functions*/
-#define NETWORK_CODING 1   /*activates packet capturing and network coding mechanism */
-#define MAX_N_PAYLOADS 5   /*maximum number of concurrent messages stored in buffer*/
-#undef MAX_N_PAYLOADS 
-#define MAX_CODED_PAYLOADS 3  /* max number of packets in the buffer to code*/
-#define PERIODIC_MESSAGE 1 /*activate periodic resource for testing*/
+#define PERIODIC_MESSAGE 0 /*activate periodic resource for auto send coded */
+extern int id_node; /*for cooja tests, used in tcpip*/
+
+#define NETWORK_CODING 0   /*activates packet capturing and network coding mechanism */
+#define MAX_CODED_PAYLOADS 4  /* max number of packets in the buffer to code*/
 #define TRIGGERPACKETS 2 /*number of packets that trigger a coded message*/
 
+#define OBS_REFRESH_INTERVAL 1 /*interval of ack in messages, 1 to allways coded*/
+#define SEND_MESSAGE_INTERVAL 20 /*interval to send observable, coded resource messages*/
+#define MAX_RETRANS 5 /*max number of retransmissions of a single message*/
+
+extern unsigned int count_retrans;
+extern unsigned int count_ack;
+extern unsigned int total_coap_sent; /*number of coap messages sent including retransmissions*/
 
 /* Custom channel and PAN ID configuration for your project. */
 /*

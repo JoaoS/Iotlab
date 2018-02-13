@@ -49,9 +49,11 @@
 #include "dev/button-sensor.h"
 #endif
 
-#if NETWORK_CODING /*densenet*/
+/*densenet*/
 #include "examples/er-rest-example/ncoding.h"
-#endif
+
+static int flag=0;
+static int time_f=0;
 
 #define DEBUG 0
 #if DEBUG
@@ -202,16 +204,35 @@ if (id_node > 6){
   }
 #endif
   /*************************densenet**************************/
+  static struct etimer reset_stats;
+  etimer_set(&reset_stats, CLOCK_SECOND*60); // warmup time,  reset for data collection
 
+
+  static struct etimer stats;
+  etimer_set(&stats, CLOCK_SECOND*60); // set timer to add the observers
   /* Define application-specific events here. */
   while(1) {
     PROCESS_WAIT_EVENT();
-
+    
+    if (etimer_expired(&reset_stats) && flag==0)/*just one execution, add flag or else the condition always executes*/
+    {
+      count_retrans=0;
+      count_ack=0;
+      total_coap_sent=0;
+      printf("1st minute discard, reset variables\n");
+      flag=1;
+    }
     
     /*prepare new message and send it to external IP address*/
     if (ev == coding_event ){
       //send coded message, located in nconding file
       send_coded(&res_coded);
+    }
+    if (etimer_expired(&stats))
+    {
+      time_f = time_f+1;
+      etimer_reset(&stats);
+      printf("(%d minute)retrans=%u, acks=%u sent coap messages(include retrans)=%u\n",time_f,count_retrans,count_ack,total_coap_sent);
 
     }
 
