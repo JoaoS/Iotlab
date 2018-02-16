@@ -61,7 +61,7 @@
 
 /* Sensors / actuators */
 #define PLATFORM_HAS_LEDS    1
-#define PLATFORM_HAS_LIGHT   1
+#define PLATFORM_HAS_LIGHT   0
 #define PLATFORM_HAS_PRESSURE 1
 #define PLATFORM_HAS_GYROSCOPE 1
 #define PLATFORM_HAS_ACCELEROMETER 1
