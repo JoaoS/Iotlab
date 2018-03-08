@@ -207,7 +207,7 @@ coap_notify_observers_sub(resource_t *resource, const char *subpath)
 
   coap_init_message(notification, COAP_TYPE_NON, CONTENT_2_05, 0); /*densenet: editei aqui para notificações nao confirmáveis*/
   /* create a "fake" request for the URI */
-  coap_init_message(request, COAP_TYPE_NON, COAP_GET, 0);   /*densenet: editei aqui para notificações nao confirmáveis*/
+  coap_init_message(request, COAP_TYPE_CON, COAP_GET, 0);   /*densenet: editei aqui para notificações nao confirmáveis*/
   coap_set_header_uri_path(request, url);
 
   /* iterate over observers */

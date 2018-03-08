@@ -49,7 +49,7 @@
 #include "dev/button-sensor.h"
 #endif
 
-/*densenet*/
+/**/
 #include "examples/er-rest-example/ncoding.h"
 
 static int flag=0;
@@ -119,6 +119,10 @@ PROCESS_THREAD(er_example_server, ev, data)
   PROCESS_PAUSE();
 
   PRINTF("Starting Erbium Example Server\n");
+  printf(" MAC=%s, RDC=%s, NETWORK=%s,check-rate-Hz=%-u,\n",
+    NETSTACK_MAC.name, NETSTACK_RDC.name, NETSTACK_NETWORK.name,NETSTACK_CONF_RDC_CHANNEL_CHECK_RATE);
+  //printf("Channel=%d Transmission Power=%d, Ipv6 conf netstack=%u\n",RF2XX_CHANNEL, RF2XX_TX_POWER,NETSTACK_CONF_WITH_IPV6);
+
 
 #ifdef RF_CHANNEL
   PRINTF("RF channel: %u\n", RF_CHANNEL);
@@ -145,7 +149,7 @@ PROCESS_THREAD(er_example_server, ev, data)
 /*  rest_activate_resource(&res_mirror, "debug/mirror"); */
 /*  rest_activate_resource(&res_chunks, "test/chunks"); */
 /*  rest_activate_resource(&res_separate, "test/separate"); */
-  //rest_activate_resource(&res_push, "test/push");
+  rest_activate_resource(&res_push, "test/push");
 /*  rest_activate_resource(&res_event, "sensors/button"); */
 /*  rest_activate_resource(&res_sub, "test/sub"); */
 /*  rest_activate_resource(&res_b1_sep_b2, "test/b1sepb2"); */
@@ -209,7 +213,7 @@ if (id_node > 6){
 
 
   static struct etimer stats;
-  etimer_set(&stats, CLOCK_SECOND*60); // set timer to add the observers
+  etimer_set(&stats, CLOCK_SECOND*60); // print statistics
   /* Define application-specific events here. */
   while(1) {
     PROCESS_WAIT_EVENT();
@@ -224,8 +228,9 @@ if (id_node > 6){
     }
     
     /*prepare new message and send it to external IP address*/
-    if (ev == coding_event ){
+    if (ev == coding_event){
       //send coded message, located in nconding file
+      printf("my event\n");
       send_coded(&res_coded);
     }
     if (etimer_expired(&stats))

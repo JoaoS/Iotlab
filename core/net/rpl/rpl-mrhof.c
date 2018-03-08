@@ -45,7 +45,7 @@
  * \addtogroup uip6
  * @{
  */
-
+#include "net/ip/uiplib.h"
 #include "net/rpl/rpl.h"
 #include "net/rpl/rpl-private.h"
 #include "net/nbr-table.h"
@@ -53,6 +53,8 @@
 
 #define DEBUG DEBUG_NONE
 #include "net/ip/uip-debug.h"
+#define PRINT6ADDR2(addr) uip_debug_ipaddr_print(addr)
+
 
 /* RFC6551 and RFC6719 do not mandate the use of a specific formula to
  * compute the ETX value. This MRHOF implementation relies on the value
@@ -193,6 +195,11 @@ parent_has_usable_link(rpl_parent_t *p)
   return link_metric <= MAX_LINK_METRIC;
 }
 /*---------------------------------------------------------------------------*/
+
+
+// Include in rpl.h: int is_the_static_nexthop(rpl_parent_t *p1);
+// The code bellow has to be include in rpl-mrhof.c
+/*---------------------------------------------------------------------------*/
 static rpl_parent_t *
 best_parent(rpl_parent_t *p1, rpl_parent_t *p2)
 {
@@ -201,31 +208,71 @@ best_parent(rpl_parent_t *p1, rpl_parent_t *p2)
   uint16_t p2_cost;
   int p1_is_acceptable;
   int p2_is_acceptable;
+  
 
   p1_is_acceptable = p1 != NULL && parent_is_acceptable(p1);
   p2_is_acceptable = p2 != NULL && parent_is_acceptable(p2);
+
+
+#if HARDCODED_TOPOLOGY
+// DENSENET This if clause force the parent to be a static one.
+  if(is_the_static_nexthop(p1)){ 
+      return p1;
+    }
+  else if(is_the_static_nexthop(p2)){
+      return p2;
+  }
+#endif
+
+  /*else{ old setup without the macro topology above*/
 
   if(!p1_is_acceptable) {
     return p2_is_acceptable ? p2 : NULL;
   }
   if(!p2_is_acceptable) {
-    return p1_is_acceptable ? p1 : NULL;
-  }
+    return p1_is_acceptable ? p1 : NULL;  
 
-  dag = p1->dag; /* Both parents are in the same DAG. */
-  p1_cost = parent_path_cost(p1);
-  p2_cost = parent_path_cost(p2);
+  } 
+   printf("Static Parent: None of the tested parents is the static one \n");
+   
+   dag = p1->dag; // Both parents are in the same DAG.
+   p1_cost = parent_path_cost(p1);
+   p2_cost = parent_path_cost(p2);
 
-  /* Maintain stability of the preferred parent in case of similar ranks. */
-  if(p1 == dag->preferred_parent || p2 == dag->preferred_parent) {
-    if(p1_cost < p2_cost + PARENT_SWITCH_THRESHOLD &&
-       p1_cost > p2_cost - PARENT_SWITCH_THRESHOLD) {
-      return dag->preferred_parent;
-    }
-  }
+   // Maintain stability of the preferred parent in case of similar ranks.
+   if(p1 == dag->preferred_parent || p2 == dag->preferred_parent) {
+     if(p1_cost < p2_cost + PARENT_SWITCH_THRESHOLD &&
+        p1_cost > p2_cost - PARENT_SWITCH_THRESHOLD) {
+       return dag->preferred_parent;
+     }
+   }
 
   return p1_cost < p2_cost ? p1 : p2;
+  
+/*}*/
+
 }
+
+/*---------------------------------------------------------------------------*/
+// Function that find out if the parent has an pre-determined address.
+// Riker
+int is_the_static_nexthop(rpl_parent_t *p1){
+  uip_ipaddr_t static_addr;    
+  uiplib_ipaddrconv(PARENT_IP,&static_addr);    
+/*
+  print comparisson*/
+  printf("comparisson=%d, ip=   ",uip_ipaddr_cmp(rpl_get_parent_ipaddr(p1), &static_addr) );
+  PRINT6ADDR2(rpl_get_parent_ipaddr(p1)); printf("\n" );
+
+  if(uip_ipaddr_cmp(rpl_get_parent_ipaddr(p1), &static_addr)){
+   PRINTF("Static Parent: The tested parent has the following address");
+   PRINT6ADDR(rpl_get_parent_ipaddr(p1));
+   return 1;
+   }
+  else return 0;
+}
+/*---------------------------------------------------------------------------*/
+
 /*---------------------------------------------------------------------------*/
 static rpl_dag_t *
 best_dag(rpl_dag_t *d1, rpl_dag_t *d2)

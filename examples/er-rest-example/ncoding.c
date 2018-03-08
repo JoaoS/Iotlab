@@ -6,7 +6,7 @@
 #include "contiki.h"
 #include "ncoding.h"
 
-#define DEBUG 1
+#define DEBUG 0
 #if DEBUG
 #include <stdio.h>
 #define PRINTF(...) printf(__VA_ARGS__)
@@ -17,9 +17,9 @@
 MEMB(coded_memb, s_message_t, MAX_CODED_PAYLOADS);
 LIST(coded_list); /*points to saved packets*/
 
-PROCESS_NAME(er_example_server);
+//PROCESS_NAME(er_example_server);
 static char msg[]="oi";
-static int totalcounter=0;
+static int totalcounter=1;
 
 /**/
 void add_payload(uint8_t *incomingPayload, uint16_t mid, uint8_t len, uip_ipaddr_t * destaddr, uint16_t dport ){
@@ -42,7 +42,7 @@ void add_payload(uint8_t *incomingPayload, uint16_t mid, uint8_t len, uip_ipaddr
 		printf("ERROR ALOCATING MEMORY FOR PACKET\n");
 
 	if(list_length(coded_list) % TRIGGERPACKETS == 0){//signal for coded message
-		process_post(&er_example_server,coding_event, NULL);
+		process_post(PROCESS_BROADCAST,coding_event, NULL);
 	}
 }
 
@@ -73,8 +73,8 @@ void send_coded(resource_t *resource){
 
     }
     //clean buffer
-		free_data();
- 			PRINTF("free=%d\n",memb_numfree(&coded_memb));
+	free_data();
+ 	PRINTF("free=%d\n",memb_numfree(&coded_memb));
 }
 
 void create_xor(void *response, uint8_t *buffer, uint16_t preferred_size){

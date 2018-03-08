@@ -42,19 +42,84 @@
 /*densenet: network coding mechanism*/
 /*add files for packet capturing and network coding functions*/
 #define PERIODIC_MESSAGE 0 /*activate periodic resource for auto send coded */
-extern int id_node; /*for cooja tests, used in tcpip*/
+//extern int id_node; /*for cooja tests, used in tcpip*/
 
 #define NETWORK_CODING 0   /*activates packet capturing and network coding mechanism */
 #define MAX_CODED_PAYLOADS 4  /* max number of packets in the buffer to code*/
 #define TRIGGERPACKETS 2 /*number of packets that trigger a coded message*/
 
-#define OBS_REFRESH_INTERVAL 1 /*interval of ack in messages, 1 to allways coded*/
+#define OBS_REFRESH_INTERVAL 1 /*interval of ack in messages, 1 to allways confirmable*/
 #define SEND_MESSAGE_INTERVAL 20 /*interval to send observable, coded resource messages*/
-#define MAX_RETRANS 5 /*max number of retransmissions of a single message*/
+#define MAX_RETRANS 4 /*max number of retransmissions of a single message*/
 
 extern unsigned int count_retrans;
 extern unsigned int count_ack;
 extern unsigned int total_coap_sent; /*number of coap messages sent including retransmissions*/
+
+
+#define RPL_UPDATE_INTERVAL 600
+
+#define HARDCODED_TOPOLOGY 1
+#define PARENT_IP "fe80::9567" 
+
+
+//undef para ativar
+#undef NETSTACK_CONF_RDC_CHANNEL_CHECK_RATE
+#define NETSTACK_CONF_RDC_CHANNEL_CHECK_RATE 8
+
+
+#undef RF2XX_TX_POWER
+#define RF2XX_TX_POWER  0x0F  //PHY_POWER_m12dBm, before lowest level of power(0,1,2,3,4(0x0A),5(B),7(C),9(D),12(E),17(F))
+
+
+/*to adjust for multihop
+* to avoid including header files for power check the page below for the hex
+* https://github.com/iot-lab/openlab/blob/master/periph/rf2xx/rf2xx_regs.h#L236
+
+   RF2XX_PHY_TX_PWR_TX_PWR_VALUE__3dBm = 0x00,
+    RF2XX_PHY_TX_PWR_TX_PWR_VALUE__2_8dBm = 0x01,
+    RF2XX_PHY_TX_PWR_TX_PWR_VALUE__2_3dBm = 0x02,
+    RF2XX_PHY_TX_PWR_TX_PWR_VALUE__1_8dBm = 0x03,
+    RF2XX_PHY_TX_PWR_TX_PWR_VALUE__1_3dBm = 0x04,
+    RF2XX_PHY_TX_PWR_TX_PWR_VALUE__0_7dBm = 0x05,
+    RF2XX_PHY_TX_PWR_TX_PWR_VALUE__0dBm = 0x06,
+    RF2XX_PHY_TX_PWR_TX_PWR_VALUE__m1dBm = 0x07,
+    RF2XX_PHY_TX_PWR_TX_PWR_VALUE__m2dBm = 0x08,
+    RF2XX_PHY_TX_PWR_TX_PWR_VALUE__m3dBm = 0x09,
+    RF2XX_PHY_TX_PWR_TX_PWR_VALUE__m4dBm = 0x0A,
+    RF2XX_PHY_TX_PWR_TX_PWR_VALUE__m5dBm = 0x0B,
+    RF2XX_PHY_TX_PWR_TX_PWR_VALUE__m7dBm = 0x0C,
+    RF2XX_PHY_TX_PWR_TX_PWR_VALUE__m9dBm = 0x0D,
+    RF2XX_PHY_TX_PWR_TX_PWR_VALUE__m12dBm = 0x0E,
+    RF2XX_PHY_TX_PWR_TX_PWR_VALUE__m17dBm = 0x0F,
+*/
+
+/*
+#undef NETSTACK_CONF_MAC
+#define NETSTACK_CONF_MAC     csma_driver
+
+#undef NETSTACK_CONF_RDC
+#define NETSTACK_CONF_RDC     contikimac_driver
+
+
+#ifndef NETSTACK_CONF_FRAMER
+#if NETSTACK_CONF_WITH_IPV6
+#define NETSTACK_CONF_FRAMER  contikimac_framer
+#else
+#define NETSTACK_CONF_FRAMER  framer_802154
+#endif
+#endif
+
+#undef RF2XX_CHANNEL
+#define RF2XX_CHANNEL 5
+
+
+#undef RF2XX_TX_POWER
+#define RF2XX_TX_POWER  0x0F  //PHY_POWER_m17dBm
+
+#undef RF2XX_RX_RSSI_THRESHOLD
+#define RF2XX_RX_RSSI_THRESHOLD  0xb //RF2XX_PHY_RX_THRESHOLD__m60dBm
+*/
 
 /* Custom channel and PAN ID configuration for your project. */
 /*
@@ -74,18 +139,20 @@ extern unsigned int total_coap_sent; /*number of coap messages sent including re
 /* Disabling RDC and CSMA for demo purposes. Core updates often
    require more memory. */
 /* For projects, optimize memory and enable RDC and CSMA again. */
+/*
 #undef NETSTACK_CONF_RDC
 #define NETSTACK_CONF_RDC              nullrdc_driver
 
 #undef RPL_CONF_MAX_DAG_PER_INSTANCE
 #define RPL_CONF_MAX_DAG_PER_INSTANCE     1
 
-/* Disabling TCP on CoAP nodes. */
+ Disabling TCP on CoAP nodes. */
 #undef UIP_CONF_TCP
 #define UIP_CONF_TCP                   0
-
+/*
 #undef NETSTACK_CONF_MAC
 #define NETSTACK_CONF_MAC     nullmac_driver
+*/
 
 /* Increase rpl-border-router IP-buffer when using more than 64. */
 #undef REST_MAX_CHUNK_SIZE

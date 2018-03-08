@@ -177,7 +177,7 @@ coap_check_transactions()
     if(etimer_expired(&t->retrans_timer)) {
       count_retrans++;
       ++(t->retrans_counter);
-      PRINTF("Retransmitting %u (%u)\n", t->mid, t->retrans_counter);
+      printf("Retransmitting %u (%u)\n", t->mid, t->retrans_counter);
       coap_send_transaction(t);
     }
   }
