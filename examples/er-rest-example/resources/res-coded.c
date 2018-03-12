@@ -56,7 +56,7 @@ res_get_handler(void *request, void *response, uint8_t *buffer, uint16_t preferr
   
 
   temperature = 1+ random_rand() % 35;
-  //REST.set_header_etag(response, (uint8_t *)&seed, 1);/*this signals the message has been coded*/
+  REST.set_header_etag(response, (uint8_t *)&seed, 1);/*this signals the message has been coded*/
   PRINTF("Prefered size =%u\ntemperature = %u\n",preferred_size, temperature);
   REST.set_response_payload(response, buffer, snprintf((char *)buffer, preferred_size, "%u", temperature));
   

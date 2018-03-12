@@ -233,7 +233,7 @@ best_parent(rpl_parent_t *p1, rpl_parent_t *p2)
     return p1_is_acceptable ? p1 : NULL;  
 
   } 
-   printf("Static Parent: None of the tested parents is the static one \n");
+   PRINTF("Static Parent: None of the tested parents is the static one \n");
    
    dag = p1->dag; // Both parents are in the same DAG.
    p1_cost = parent_path_cost(p1);
@@ -256,21 +256,24 @@ best_parent(rpl_parent_t *p1, rpl_parent_t *p2)
 /*---------------------------------------------------------------------------*/
 // Function that find out if the parent has an pre-determined address.
 // Riker
+#if HARDCODED_TOPOLOGY
+
 int is_the_static_nexthop(rpl_parent_t *p1){
   uip_ipaddr_t static_addr;    
   uiplib_ipaddrconv(PARENT_IP,&static_addr);    
 /*
   print comparisson*/
-  printf("comparisson=%d, ip=   ",uip_ipaddr_cmp(rpl_get_parent_ipaddr(p1), &static_addr) );
-  PRINT6ADDR2(rpl_get_parent_ipaddr(p1)); printf("\n" );
+ // printf("comparisson=%d, ip=   ",uip_ipaddr_cmp(rpl_get_parent_ipaddr(p1), &static_addr) );
+  //PRINT6ADDR2(rpl_get_parent_ipaddr(p1)); printf("\n" );
 
   if(uip_ipaddr_cmp(rpl_get_parent_ipaddr(p1), &static_addr)){
-   PRINTF("Static Parent: The tested parent has the following address");
-   PRINT6ADDR(rpl_get_parent_ipaddr(p1));
+   //PRINTF("Static Parent: The tested parent has the following address");
+   //PRINT6ADDR(rpl_get_parent_ipaddr(p1));
    return 1;
    }
   else return 0;
 }
+#endif
 /*---------------------------------------------------------------------------*/
 
 /*---------------------------------------------------------------------------*/

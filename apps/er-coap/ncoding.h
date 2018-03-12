@@ -6,10 +6,15 @@
  *		
  */
 
-/*create struct to store message value and ID for later coding*/
-#include "er-coap.h"
-#include "er-coap-transactions.h"
+#ifndef COAP_CODING_H_
+#define COAP_CODING_H_
 
+#include "er-coap.h"
+
+#include "er-coap-transactions.h"
+//#include "rest-engine.h"
+
+/*create struct to store message value and ID for later coding*/
 /*TODO: in the future url might be added and create a struct element list for each resource instead of simple struct list*/
 typedef struct s_message{
 	struct s_message *next;   /* for LIST */
@@ -35,3 +40,5 @@ void send_coded(resource_t *resource);
 void create_xor(void *response, uint8_t *buffer, uint16_t preferred_size);
 void remove_element(s_message_t * o);
 void free_data(void);
+
+#endif

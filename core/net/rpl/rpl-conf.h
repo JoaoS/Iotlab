@@ -212,7 +212,7 @@
  * used in RPL lifetime values, in seconds.
  */
 #ifndef RPL_CONF_DEFAULT_LIFETIME_UNIT
-#define RPL_DEFAULT_LIFETIME_UNIT       RPL_UPDATE_INTERVAL
+#define RPL_DEFAULT_LIFETIME_UNIT       60
 #else
 #define RPL_DEFAULT_LIFETIME_UNIT       RPL_CONF_DEFAULT_LIFETIME_UNIT
 #endif
@@ -324,9 +324,9 @@
  * Interval of DIS transmission
  */
 #ifdef  RPL_CONF_DIS_INTERVAL
-#define RPL_DIS_INTERVAL                600
+#define RPL_DIS_INTERVAL                RPL_CONF_DIS_INTERVAL
 #else
-#define RPL_DIS_INTERVAL                600
+#define RPL_DIS_INTERVAL                60
 #endif
 
 /*

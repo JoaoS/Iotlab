@@ -3,7 +3,6 @@
 
 #include <stdio.h>
 #include <string.h>
-#include "contiki.h"
 #include "ncoding.h"
 
 #define DEBUG 0
@@ -17,7 +16,6 @@
 MEMB(coded_memb, s_message_t, MAX_CODED_PAYLOADS);
 LIST(coded_list); /*points to saved packets*/
 
-//PROCESS_NAME(er_example_server);
 static char msg[]="oi";
 static int totalcounter=1;
 
@@ -63,7 +61,7 @@ void send_coded(resource_t *resource){
   destination = (s_message_t *)list_head(coded_list);
 
   //the destination port is the same as the first saved message
-  if((transaction = coap_new_transaction(coap_get_mid(), &destination->addr, destination->port))) {
+  if((transaction = coap_new_transaction(destination->mid, &destination->addr, destination->port))) {
 
     // prepare response 
     notification->mid = transaction->mid;

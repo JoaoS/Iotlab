@@ -42,7 +42,7 @@
 #include "contiki.h"
 #include "contiki-net.h"
 #include "rest-engine.h"
-
+#include "ncoding.h"
 
 
 #if PLATFORM_HAS_BUTTON
@@ -50,7 +50,6 @@
 #endif
 
 /**/
-#include "examples/er-rest-example/ncoding.h"
 
 static int flag=0;
 static int time_f=0;

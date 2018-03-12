@@ -41,35 +41,51 @@
 
 /*densenet: network coding mechanism*/
 /*add files for packet capturing and network coding functions*/
-#define PERIODIC_MESSAGE 0 /*activate periodic resource for auto send coded */
-//extern int id_node; /*for cooja tests, used in tcpip*/
 
-#define NETWORK_CODING 0   /*activates packet capturing and network coding mechanism */
+#define COOJA_EXP 1  //use this to apply configurations for development in cooja
+
+#define NETWORK_CODING 1   /*activates packet capturing and network coding mechanism */
 #define MAX_CODED_PAYLOADS 4  /* max number of packets in the buffer to code*/
-#define TRIGGERPACKETS 2 /*number of packets that trigger a coded message*/
-
-#define OBS_REFRESH_INTERVAL 1 /*interval of ack in messages, 1 to allways confirmable*/
-#define SEND_MESSAGE_INTERVAL 20 /*interval to send observable, coded resource messages*/
+#define TRIGGERPACKETS 4 /*number of packets that trigger a coded message*/
+#define OBS_REFRESH_INTERVAL 20 /*interval of ack in messages, 1 to allways confirmable*/
+#define SEND_MESSAGE_INTERVAL 10 /*interval to send observable, coded resource messages*/
 #define MAX_RETRANS 4 /*max number of retransmissions of a single message*/
 
+/*variables to gather experiments data*/
 extern unsigned int count_retrans;
 extern unsigned int count_ack;
 extern unsigned int total_coap_sent; /*number of coap messages sent including retransmissions*/
 
-
-#define RPL_UPDATE_INTERVAL 600
-
+#if NETWORK_CODING
+#define RPL_UPDATE_INTERVAL 600 //testing in net/rpl/conf
 #define HARDCODED_TOPOLOGY 1
-#define PARENT_IP "fe80::9567" 
-
-
+#define PARENT_IP "fe80::200:0:0:2" 
 //undef para ativar
 #undef NETSTACK_CONF_RDC_CHANNEL_CHECK_RATE
 #define NETSTACK_CONF_RDC_CHANNEL_CHECK_RATE 8
-
-
 #undef RF2XX_TX_POWER
 #define RF2XX_TX_POWER  0x0F  //PHY_POWER_m12dBm, before lowest level of power(0,1,2,3,4(0x0A),5(B),7(C),9(D),12(E),17(F))
+#endif
+
+
+/*for doing tests in coojs and debugging*/
+# if COOJA_EXP
+
+#define PERIODIC_MESSAGE 0 /*activate periodic resource for auto send coded */
+extern int id_node; /*for cooja tests, used in tcpip*/
+#undef NETSTACK_CONF_RDC
+#define NETSTACK_CONF_RDC              nullrdc_driver
+#undef RPL_CONF_MAX_DAG_PER_INSTANCE
+#define RPL_CONF_MAX_DAG_PER_INSTANCE     1
+/* Disabling TCP on CoAP nodes. */
+#undef UIP_CONF_TCP
+#define UIP_CONF_TCP                   0
+#undef NETSTACK_CONF_MAC
+#define NETSTACK_CONF_MAC     nullmac_driver
+
+#endif
+
+
 
 
 /*to adjust for multihop
@@ -95,21 +111,6 @@ extern unsigned int total_coap_sent; /*number of coap messages sent including re
 */
 
 /*
-#undef NETSTACK_CONF_MAC
-#define NETSTACK_CONF_MAC     csma_driver
-
-#undef NETSTACK_CONF_RDC
-#define NETSTACK_CONF_RDC     contikimac_driver
-
-
-#ifndef NETSTACK_CONF_FRAMER
-#if NETSTACK_CONF_WITH_IPV6
-#define NETSTACK_CONF_FRAMER  contikimac_framer
-#else
-#define NETSTACK_CONF_FRAMER  framer_802154
-#endif
-#endif
-
 #undef RF2XX_CHANNEL
 #define RF2XX_CHANNEL 5
 
@@ -147,12 +148,7 @@ extern unsigned int total_coap_sent; /*number of coap messages sent including re
 #define RPL_CONF_MAX_DAG_PER_INSTANCE     1
 
  Disabling TCP on CoAP nodes. */
-#undef UIP_CONF_TCP
-#define UIP_CONF_TCP                   0
-/*
-#undef NETSTACK_CONF_MAC
-#define NETSTACK_CONF_MAC     nullmac_driver
-*/
+
 
 /* Increase rpl-border-router IP-buffer when using more than 64. */
 #undef REST_MAX_CHUNK_SIZE

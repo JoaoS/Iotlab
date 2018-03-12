@@ -165,7 +165,7 @@ PROCESS_THREAD(ping6_process, ev, data)
 
   etimer_set(&ping6_periodic_timer, 15*CLOCK_SECOND);
 
-  while(cont) {
+  while(1) {
     PROCESS_YIELD();
     cont = ping6handler(ev, data);
   }

@@ -80,14 +80,13 @@ extern struct uip_fallback_interface UIP_FALLBACK_INTERFACE;
 
 
 
-#if 1 /*NETWORK_CODING densenet*/
-#include "examples/er-rest-example/ncoding.h"
+#if NETWORK_CODING /*NETWORK_CODING densenet*/
 #include "apps/er-coap/er-coap.h"
 #include "apps/rest-engine/rest-engine.h"
 #include "contiki.h"
 #include <stdlib.h>
-//#define REQUEST_NODE(ipaddr)   uip_ip6addr(ipaddr, 0xfd00, 0, 0, 0, 0, 0, 0x9000 , 0x0001)      /* cooja2 */
-#define REQUEST_NODE(ipaddr)   uip_ip6addr(ipaddr, 0x2001, 0x0660, 0x5307, 0x3111, 0, 0, 0 , 0x0001)      /* cooja2 */
+#define REQUEST_NODE(ipaddr)   uip_ip6addr(ipaddr, 0xfd00, 0, 0, 0, 0, 0, 0 , 0x0001)      /* cooja2 */
+//#define REQUEST_NODE(ipaddr)   uip_ip6addr(ipaddr, 0x2001, 0x0660, 0x5307, 0x3111, 0, 0, 0 , 0x0001)      /* cooja2 */
 // 2001:660:5307:3111::1
 uip_ipaddr_t server_ipaddr;
 static void
@@ -228,18 +227,18 @@ packet_input(void)
     check_for_tcp_syn();
     uip_input();
 
-    
+/*
  REQUEST_NODE(&server_ipaddr);
 if(uip_ip6addr_cmp(&server_ipaddr,&UIP_IP_BUF->destipaddr) && !uip_ds6_is_my_addr(&UIP_IP_BUF->srcipaddr)){
   printf("Forwarding in  TCPIP :" );
   print_ipv6_addr(&UIP_IP_BUF->srcipaddr);
-} 
+} */
 #if NETWORK_CODING
     if (id_node == 2) { 
       //save message if destination is the external observer given in er-example, if the server ip is fd00::::1 it activates the web browser requests
       REQUEST_NODE(&server_ipaddr);
       if(uip_ip6addr_cmp(&server_ipaddr,&UIP_IP_BUF->destipaddr) && !uip_ds6_is_my_addr(&UIP_IP_BUF->srcipaddr)){ 
-        //printf("TESTE\n");
+        printf("TESTE\n");
         store_msg();
      }
     }
