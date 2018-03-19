@@ -417,6 +417,11 @@ PROCESS_THREAD(border_router_process, ev, data)
   SENSORS_ACTIVATE(button_sensor);
 
   PRINTF("RPL-Border router started\n");
+    PRINTF("Starting Erbium Example Server\n");
+  printf(" MAC=%s, RDC=%s, NETWORK=%s,check-rate-Hz=%-u,\n",
+    NETSTACK_MAC.name, NETSTACK_RDC.name, NETSTACK_NETWORK.name,NETSTACK_CONF_RDC_CHANNEL_CHECK_RATE);
+  //printf("Channel=%d Transmission Power=%d, Ipv6 conf netstack=%u\n",RF2XX_CHANNEL, RF2XX_TX_POWER,NETSTACK_CONF_WITH_IPV6);
+
 #if 0
    /* The border router runs with a 100% duty cycle in order to ensure high
      packet reception rates.

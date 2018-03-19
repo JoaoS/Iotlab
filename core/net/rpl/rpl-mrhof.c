@@ -267,8 +267,9 @@ int is_the_static_nexthop(rpl_parent_t *p1){
   //PRINT6ADDR2(rpl_get_parent_ipaddr(p1)); printf("\n" );
 
   if(uip_ipaddr_cmp(rpl_get_parent_ipaddr(p1), &static_addr)){
-   //PRINTF("Static Parent: The tested parent has the following address");
-   //PRINT6ADDR(rpl_get_parent_ipaddr(p1));
+   PRINTF("Static Parent: The tested parent has the following address");
+   PRINT6ADDR(rpl_get_parent_ipaddr(p1));
+   //printf("return 1 hardcoded\n");
    return 1;
    }
   else return 0;

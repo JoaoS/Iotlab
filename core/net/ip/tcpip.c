@@ -79,25 +79,35 @@ extern struct uip_fallback_interface UIP_FALLBACK_INTERFACE;
 #endif
 
 
-
-#if NETWORK_CODING /*NETWORK_CODING densenet*/
+/*NETWORK_CODING densenet*/
+#if COM_ACKS
 #include "apps/er-coap/er-coap.h"
 #include "apps/rest-engine/rest-engine.h"
-#include "contiki.h"
 #include <stdlib.h>
+#include "random.h"
 #define REQUEST_NODE(ipaddr)   uip_ip6addr(ipaddr, 0xfd00, 0, 0, 0, 0, 0, 0 , 0x0001)      /* cooja2 */
-//#define REQUEST_NODE(ipaddr)   uip_ip6addr(ipaddr, 0x2001, 0x0660, 0x5307, 0x3111, 0, 0, 0 , 0x0001)      /* cooja2 */
-// 2001:660:5307:3111::1
-uip_ipaddr_t server_ipaddr;
+//#define REQUEST_NODE(ipaddr)   uip_ip6addr(ipaddr, 0x2001, 0x0660, 0x5307, 0x3111, 0, 0, 0 , 0x0001) 
+static uip_ipaddr_t server_ipaddr;
 static void
 print_ipv6_addr(const uip_ipaddr_t *ip_addr) {
     int i;
-    for (i = 0; i < 16; i++) {
+    for (i = 14; i < 16; i++) {
         printf("%02x", ip_addr->u8[i]);
     }
 }
-#endif
 int id_node; /*for cooja id nodes*/
+unsigned int total_forwarded=0;
+unsigned int total_dropped=0;
+unsigned int from_node3=0;
+unsigned int from_node4=0;
+
+int discard_engine(int _node_id);
+#endif
+/* code ends*/
+#if NETWORK_CODING   
+void store_msg(void);
+#endif
+
 
 
 process_event_t tcpip_event;
@@ -227,12 +237,34 @@ packet_input(void)
     check_for_tcp_syn();
     uip_input();
 
-/*
- REQUEST_NODE(&server_ipaddr);
-if(uip_ip6addr_cmp(&server_ipaddr,&UIP_IP_BUF->destipaddr) && !uip_ds6_is_my_addr(&UIP_IP_BUF->srcipaddr)){
-  printf("Forwarding in  TCPIP :" );
-  print_ipv6_addr(&UIP_IP_BUF->srcipaddr);
-} */
+#if COM_ACKS /*here print the retransmission and drop if conditions are met*/
+  static uip_ipaddr_t node3,node4;
+  uip_ip6addr(&node3, 0x2001, 0x0660, 0x5307, 0x3111, 0, 0, 0 , 0xb481);
+  uip_ip6addr(&node4, 0x2001, 0x0660, 0x5307, 0x3111, 0, 0, 0 , 0xb582);
+   REQUEST_NODE(&server_ipaddr);
+
+  if( (uip_ip6addr_cmp(&node3,&UIP_IP_BUF->srcipaddr) ) && !uip_ds6_is_my_addr(&UIP_IP_BUF->srcipaddr)){
+    PRINTF("(TCPIP) Forwarding from node 3 (b481)\n " );
+    if(discard_engine(3)){
+      from_node3++;
+    }
+  } 
+  if( (uip_ip6addr_cmp(&node4,&UIP_IP_BUF->srcipaddr)) && !uip_ds6_is_my_addr(&UIP_IP_BUF->srcipaddr)){
+    PRINTF("(TCPIP) Forwarding from node 4 (b582)\n " );
+       if(discard_engine(4)){
+        from_node4++;
+    }
+  } 
+
+#endif
+
+#if COOJA_EXP
+  if(uip_ip6addr_cmp(&server_ipaddr,&UIP_IP_BUF->destipaddr) && !uip_ds6_is_my_addr(&UIP_IP_BUF->srcipaddr)){ 
+        printf("TESTE\n");
+        discard_engine();
+  }
+#endif
+
 #if NETWORK_CODING
     if (id_node == 2) { 
       //save message if destination is the external observer given in er-example, if the server ip is fd00::::1 it activates the web browser requests
@@ -920,5 +952,76 @@ store_msg(void){
       return;*/
     } 
     
+}
+#endif
+
+#if COM_ACKS
+/*
+*Returns 1 if discarded packet
+*/
+int discard_engine(int _node_id){
+
+static int var=0;
+// gilbert-elliot
+// two-state markov chain
+static int discardPkt = 0;
+static int goodState = 1;
+
+// todos os valores vao de 0% a 100%
+// quantidade de perdas no estado Good
+static int LostInGood = 0;
+// quantidade de perdas no estado Bad
+static int LostInBad = 80;
+// proporcao de troca de estado
+static int GoodToBad = 20;
+static int BadToGood = 60;
+
+if (goodState) {
+
+    // verificar se deve perder o pacote    
+    if ( (1+random_rand()%100) <= LostInGood ){
+        discardPkt = 1;
+    }else {
+        discardPkt = 0;
+    }
+    // verifica se deve mudar de estado
+    if ( (1+random_rand()%100) <= GoodToBad ) {
+        goodState = 0;
+    } else {
+        goodState = 1;
+    }
+       // cout de debug
+    //cout << "GoodState" << (discardPkt?"D":".") << (goodState?"+":"-") << endl;
+    PRINTF("Goodstate: discard=%d goodstate=%d\n",discardPkt,goodState );
+} else {
+
+    // verificar se deve perder o pacote
+    if ( (1+random_rand()%100) <= LostInBad ){
+        discardPkt = 1;
+    }else {
+        discardPkt = 0;
+    }
+    // verifica se deve mudar de estado
+    if ( (1+random_rand()%100) <= BadToGood ) {
+        goodState = 1;
+    } else {
+        goodState = 0;
+    }
+       // cout de debug 
+    //cout << "BadState" << (discardPkt?"D":".") << (goodState?"+":"-") << endl;
+    PRINTF("Badstate: discard=%d goodstate=%d\n",discardPkt,goodState );
+}
+// faz o descarte do pacote se necessario
+  if (discardPkt) {
+      printf("Discarding packet from _node_id=%d\n",_node_id);
+      uip_len = 0;
+      uip_ext_len = 0;
+      uip_flags = 0;
+      total_dropped+=1;
+      return 1;
+  }
+  total_forwarded++;
+  return 0;
+
 }
 #endif

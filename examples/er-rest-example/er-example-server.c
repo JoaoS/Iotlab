@@ -208,7 +208,7 @@ if (id_node > 6){
 #endif
   /*************************densenet**************************/
   static struct etimer reset_stats;
-  etimer_set(&reset_stats, CLOCK_SECOND*60); // warmup time,  reset for data collection
+  etimer_set(&reset_stats, CLOCK_SECOND*WARMUP_DISCARD); // warmup time,  reset for data collection
 
 
   static struct etimer stats;
@@ -222,21 +222,30 @@ if (id_node > 6){
       count_retrans=0;
       count_ack=0;
       total_coap_sent=0;
-      printf("1st minute discard, reset variables\n");
+      from_node3=0;
+      from_node4=0;
+      total_forwarded=0;
+      total_dropped=0;
+      printf("%d minute discard, reset variables\n",time_f);
       flag=1;
     }
     
     /*prepare new message and send it to external IP address*/
     if (ev == coding_event){
       //send coded message, located in nconding file
-      printf("my event\n");
+      //printf("my event\n");
       send_coded(&res_coded);
     }
     if (etimer_expired(&stats))
     {
       time_f = time_f+1;
       etimer_reset(&stats);
-      printf("(%d minute)retrans=%u, acks=%u sent coap messages(include retrans)=%u\n",time_f,count_retrans,count_ack,total_coap_sent);
+      printf("(%u minute)discarded at node 3=%u, discarded_node 4=(%u) total_forwarded=(%u), total_dropped=(%u)\n",time_f,from_node3,from_node4,total_forwarded,total_dropped);
+      if (time_f==7)
+      {
+        printf("(%d minute)retrans=%u, acks=%u sent coap messages(include retrans)=%u\n",time_f,count_retrans,count_ack,total_coap_sent);
+        //printf("(%u minute)discarded at node 3=%u, discarded_node 4=(%u) total_forwarded=(%u), total_dropped=(%u)\n",time_f,from_node3,from_node4,total_forwarded,total_dropped);
+      }
 
     }
 
