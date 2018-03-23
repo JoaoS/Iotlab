@@ -57,24 +57,34 @@ extern unsigned int count_retrans;
 extern unsigned int count_ack;
 extern unsigned int total_coap_sent; /*number of coap messages sent including retransmissions*/
 
-/*variables for the gilbert elliot discard*/
+/*variables for the gilbert elliot discard statistics*/
 extern unsigned int total_forwarded;
 extern unsigned int total_dropped;
 extern unsigned int from_node3;
 extern unsigned int from_node4;
+extern unsigned int lostpackets;
+
+
+/*gilber elliot transition probabilities fro 0 to 100*/
+#define GoodToBad 3
+#define BadToGood 84
 
 /*end*/
+
 #define COOJA_EXP 0                 /*use this to apply configurations for development in cooja*/
-#define IOTLAB 1
+#define IOTLAB 1        /*reduces power and other stuff for testing in iotlab*/
 #define HARDCODED_TOPOLOGY 1
-#define COM_ACKS 1
+#define COM_ACKS 1 /*TO ADD HEADER AND FUNCTION DECLARATIONS IN TCPIP*/
+#define GILBERT_ELLIOT_DISCARDER 1     /*this macro sends packets to loss model*/
 //#define REQUEST_NODE(ipaddr)   uip_ip6addr(ipaddr, 0x2001, 0x0660, 0x5307, 0x3111, 0, 0, 0 , 0x0001) 
 
 
 #if IOTLAB
 //#define RPL_UPDATE_INTERVAL 600 //testing in net/rpl/conf
 #if HARDCODED_TOPOLOGY
-#define PARENT_IP "fe80::c081" 
+#define PARENT_IP "fe80::c081"
+#define NODE_3_IP 0x2160
+#define NODE_4_IP 0x9981
 #endif
 //#undef NETSTACK_CONF_RDC_CHANNEL_CHECK_RATE
 //#define NETSTACK_CONF_RDC_CHANNEL_CHECK_RATE 8
@@ -180,5 +190,5 @@ extern int id_node; /*for cooja tests, used in tcpip*/
 #define RPL_CONF_WITH_DAO_ACK          0
 
 /* Enable client-side support for COAP observe */
-#define COAP_OBSERVE_CLIENT 1
+#define COAP_OBSERVE_CLIENT 0
 #endif /* __PROJECT_ERBIUM_CONF_H__ */

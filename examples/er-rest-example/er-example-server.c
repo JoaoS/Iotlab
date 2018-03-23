@@ -240,10 +240,10 @@ if (id_node > 6){
     {
       time_f = time_f+1;
       etimer_reset(&stats);
-      printf("(%u minute)discarded at node 3=%u, discarded_node 4=(%u) total_forwarded=(%u), total_dropped=(%u)\n",time_f,from_node3,from_node4,total_forwarded,total_dropped);
+      printf("(%d minute)discarded at node_3=(%u), discarded_node_4=(%u) total_forwarded=(%u), total_dropped=(%u)\n",time_f,from_node3,from_node4,total_forwarded,total_dropped);
       if (time_f==7)
       {
-        printf("(%d minute)retrans=%u, acks=%u sent coap messages(include retrans)=%u\n",time_f,count_retrans,count_ack,total_coap_sent);
+        printf("(%d minute)retrans=(%u), confirmed messages=(%u) sent coap messages(include retrans)=(%u) lostpackets(at producers)=(%u)\n",time_f,count_retrans,count_ack,total_coap_sent,lostpackets);
         //printf("(%u minute)discarded at node 3=%u, discarded_node 4=(%u) total_forwarded=(%u), total_dropped=(%u)\n",time_f,from_node3,from_node4,total_forwarded,total_dropped);
       }
 

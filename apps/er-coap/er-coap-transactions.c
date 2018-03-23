@@ -61,6 +61,8 @@ static struct process *transaction_handler_process = NULL;
 unsigned int count_retrans=0;
 unsigned int count_ack=0;
 unsigned int total_coap_sent=0;
+unsigned int lostpackets=0;
+
 /*---------------------------------------------------------------------------*/
 /*- Internal API ------------------------------------------------------------*/
 /*---------------------------------------------------------------------------*/
@@ -91,7 +93,7 @@ coap_new_transaction(uint16_t mid, uip_ipaddr_t *addr, uint16_t port)
 void
 coap_send_transaction(coap_transaction_t *t)
 {
-  printf("Sending transaction %u\n", t->mid);
+  PRINTF("Sending transaction %u\n", t->mid);
 
   coap_send_message(&t->addr, t->port, t->packet, t->packet_len);
 
@@ -129,12 +131,13 @@ coap_send_transaction(coap_transaction_t *t)
       void *callback_data = t->callback_data;
 
       /* handle observers */
-      coap_remove_observer_by_client(&t->addr, t->port);
+      /*densenet do not remove observers, just consider the packet lost*/
+      //coap_remove_observer_by_client(&t->addr, t->port);
+      lostpackets++;
 
       coap_clear_transaction(t);
 
       if(callback) {
-        printf("callback chamada\n");
         callback(callback_data, NULL);
       }
     }
@@ -177,7 +180,7 @@ coap_check_transactions()
     if(etimer_expired(&t->retrans_timer)) {
       count_retrans++;
       ++(t->retrans_counter);
-      printf("Retransmitting %u (%u)\n", t->mid, t->retrans_counter);
+      PRINTF("Retransmitting %u (%u)\n", t->mid, t->retrans_counter);
       coap_send_transaction(t);
     }
   }

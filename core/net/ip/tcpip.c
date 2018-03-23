@@ -237,11 +237,12 @@ packet_input(void)
     check_for_tcp_syn();
     uip_input();
 
-#if COM_ACKS /*here print the retransmission and drop if conditions are met*/
+#if GILBERT_ELLIOT_DISCARDER /*here print the retransmission and drop if conditions are met*/
   static uip_ipaddr_t node3,node4;
-  uip_ip6addr(&node3, 0x2001, 0x0660, 0x5307, 0x3111, 0, 0, 0 , 0xb481);
-  uip_ip6addr(&node4, 0x2001, 0x0660, 0x5307, 0x3111, 0, 0, 0 , 0xb582);
-   REQUEST_NODE(&server_ipaddr);
+  uip_ip6addr(&node3, 0x2001, 0x0660, 0x5307, 0x3111, 0, 0, 0 , NODE_3_IP);
+  uip_ip6addr(&node4, 0x2001, 0x0660, 0x5307, 0x3111, 0, 0, 0 , NODE_4_IP);
+  //uip_ip6addr(&node3, 0xfd00, 0, 0, 0, 200, 0, 0 , 0x0003);
+  //uip_ip6addr(&node4, 0xfd00, 0, 0, 0, 200, 0, 0 , 0x0004);
 
   if( (uip_ip6addr_cmp(&node3,&UIP_IP_BUF->srcipaddr) ) && !uip_ds6_is_my_addr(&UIP_IP_BUF->srcipaddr)){
     PRINTF("(TCPIP) Forwarding from node 3 (b481)\n " );
@@ -258,7 +259,8 @@ packet_input(void)
 
 #endif
 
-#if COOJA_EXP
+#if 0
+  REQUEST_NODE(&server_ipaddr);
   if(uip_ip6addr_cmp(&server_ipaddr,&UIP_IP_BUF->destipaddr) && !uip_ds6_is_my_addr(&UIP_IP_BUF->srcipaddr)){ 
         printf("TESTE\n");
         discard_engine();
@@ -971,11 +973,10 @@ static int goodState = 1;
 // quantidade de perdas no estado Good
 static int LostInGood = 0;
 // quantidade de perdas no estado Bad
-static int LostInBad = 80;
-// proporcao de troca de estado
-static int GoodToBad = 20;
-static int BadToGood = 60;
-
+static int LostInBad = 100;
+// proporcao de troca de estado - no project conf
+//static int GoodToBad = 20;
+//static int BadToGood = 60;
 if (goodState) {
 
     // verificar se deve perder o pacote    

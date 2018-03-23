@@ -263,12 +263,12 @@ int is_the_static_nexthop(rpl_parent_t *p1){
   uiplib_ipaddrconv(PARENT_IP,&static_addr);    
 /*
   print comparisson*/
- // printf("comparisson=%d, ip=   ",uip_ipaddr_cmp(rpl_get_parent_ipaddr(p1), &static_addr) );
+  //printf("comparisson=%d, ip=   ",uip_ipaddr_cmp(rpl_get_parent_ipaddr(p1), &static_addr) );
   //PRINT6ADDR2(rpl_get_parent_ipaddr(p1)); printf("\n" );
 
   if(uip_ipaddr_cmp(rpl_get_parent_ipaddr(p1), &static_addr)){
-   PRINTF("Static Parent: The tested parent has the following address");
-   PRINT6ADDR(rpl_get_parent_ipaddr(p1));
+   //printf("Static Parent: The tested parent has the following address");
+   //PRINT6ADDR(rpl_get_parent_ipaddr(p1));
    //printf("return 1 hardcoded\n");
    return 1;
    }
