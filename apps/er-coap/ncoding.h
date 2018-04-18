@@ -25,6 +25,10 @@ typedef struct s_message{
 	uint8_t data_len; // to be used in the mask xor process
 	uint16_t mid;
 	
+	int32_t observe;
+  	uint8_t token_len;
+  	uint8_t token[COAP_TOKEN_LEN];
+
 }s_message_t;
 
 /*array of payloads to send*/
@@ -35,7 +39,7 @@ process_event_t coding_event; /*event to signal a coded message is ready to be s
 /*functions*/
 
 /*add payload to buffer*/
-void add_payload(uint8_t *incomingPayload, uint16_t mid, uint8_t len, uip_ipaddr_t * destaddr, uint16_t dport );
+void add_payload(uint8_t *incomingPayload, uint16_t mid, uint8_t len, uip_ipaddr_t * destaddr, uint16_t dport, coap_packet_t * coap_pt  );
 void send_coded(resource_t *resource);
 void create_xor(void *response, uint8_t *buffer, uint16_t preferred_size);
 void remove_element(s_message_t * o);

@@ -49,7 +49,7 @@ PERIODIC_RESOURCE(res_push,
                   NULL,
                   NULL,
                   NULL,
-                  20 * CLOCK_SECOND,
+                  600 * CLOCK_SECOND,
                   res_periodic_handler);
 
 /*
@@ -84,7 +84,7 @@ res_periodic_handler()
   ++event_counter;
 
   /* Usually a condition is defined under with subscribers are notified, e.g., large enough delta in sensor reading. */
-  if(1) {
+  if(0) {
     /* Notify the registered observers which will trigger the res_get_handler to create the response. */
     REST.notify_subscribers(&res_push);
   }

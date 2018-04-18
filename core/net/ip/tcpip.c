@@ -96,12 +96,13 @@ print_ipv6_addr(const uip_ipaddr_t *ip_addr) {
     }
 }
 int id_node; /*for cooja id nodes*/
-unsigned int total_forwarded=0;
-unsigned int total_dropped=0;
-unsigned int from_node3=0;
-unsigned int from_node4=0;
-
+ int total_forwarded=0;
+ int total_dropped=0;
+ int from_node3=0;
+ int from_node4=0;
+void print_mid();
 int discard_engine(int _node_id);
+int loss_array[ELEMENTS]={0};
 #endif
 /* code ends*/
 #if NETWORK_CODING   
@@ -236,46 +237,74 @@ packet_input(void)
 
     check_for_tcp_syn();
     uip_input();
+#if HARDCODED_TOPOLOGY
+  static uip_ipaddr_t node7,node8,node9,node10,node11,node12;
+  uip_ip6addr(&node7, 0x2001, 0x0660, 0x3207, 0x04c0, 0, 0, 0 , NODE_7_IP);
+  uip_ip6addr(&node8, 0x2001, 0x0660, 0x3207, 0x04c0, 0, 0, 0 , NODE_8_IP);
+  uip_ip6addr(&node9, 0x2001, 0x0660, 0x3207, 0x04c0, 0, 0, 0 , NODE_9_IP);
+  uip_ip6addr(&node10, 0x2001, 0x0660, 0x3207, 0x04c0, 0, 0, 0 , NODE_10_IP);
+  uip_ip6addr(&node11, 0x2001, 0x0660, 0x3207, 0x04c0, 0, 0, 0 , NODE_11_IP);
+  uip_ip6addr(&node12, 0x2001, 0x0660, 0x3207, 0x04c0, 0, 0, 0 , NODE_12_IP);
+  
 
-#if GILBERT_ELLIOT_DISCARDER /*here print the retransmission and drop if conditions are met*/
-  static uip_ipaddr_t node3,node4;
-  uip_ip6addr(&node3, 0x2001, 0x0660, 0x5307, 0x3111, 0, 0, 0 , NODE_3_IP);
-  uip_ip6addr(&node4, 0x2001, 0x0660, 0x5307, 0x3111, 0, 0, 0 , NODE_4_IP);
   //uip_ip6addr(&node3, 0xfd00, 0, 0, 0, 200, 0, 0 , 0x0003);
   //uip_ip6addr(&node4, 0xfd00, 0, 0, 0, 200, 0, 0 , 0x0004);
-
-  if( (uip_ip6addr_cmp(&node3,&UIP_IP_BUF->srcipaddr) ) && !uip_ds6_is_my_addr(&UIP_IP_BUF->srcipaddr)){
-    PRINTF("(TCPIP) Forwarding from node 3 (b481)\n " );
-    if(discard_engine(3)){
-      from_node3++;
+  /*if (!dis_flag) //debug prints
+  {
+    
+    if( (uip_ip6addr_cmp(&node3,&UIP_IP_BUF->srcipaddr) ) && !uip_ds6_is_my_addr(&UIP_IP_BUF->srcipaddr)){
+      printf("forwarding message\n");
+      print_mid(3);
+    } 
+    if( (uip_ip6addr_cmp(&node4,&UIP_IP_BUF->srcipaddr)) && !uip_ds6_is_my_addr(&UIP_IP_BUF->srcipaddr)){
+      printf("forwarding message\n");
+      print_mid(4);
+    } 
+  }*/
+  #if NETWORK_CODING
+        //save message if destination is the external observer given in er-example, if the server ip is fd00::::1 it activates the web browser requests
+    if((uip_ip6addr_cmp(&node4,&UIP_IP_BUF->srcipaddr) || uip_ip6addr_cmp(&node3,&UIP_IP_BUF->srcipaddr)) && !uip_ds6_is_my_addr(&UIP_IP_BUF->srcipaddr)){ 
+      //printf("TESTE\n");
+      store_msg();
     }
-  } 
-  if( (uip_ip6addr_cmp(&node4,&UIP_IP_BUF->srcipaddr)) && !uip_ds6_is_my_addr(&UIP_IP_BUF->srcipaddr)){
-    PRINTF("(TCPIP) Forwarding from node 4 (b582)\n " );
-       if(discard_engine(4)){
-        from_node4++;
-    }
-  } 
-
 #endif
-
-#if 0
-  REQUEST_NODE(&server_ipaddr);
-  if(uip_ip6addr_cmp(&server_ipaddr,&UIP_IP_BUF->destipaddr) && !uip_ds6_is_my_addr(&UIP_IP_BUF->srcipaddr)){ 
-        printf("TESTE\n");
-        discard_engine();
+  
+  if (dis_flag) // set in er-rest-example
+  {
+#if GILBERT_ELLIOT_DISCARDER /*here print the retransmission and drop if conditions are met*/
+    if( (uip_ip6addr_cmp(&node7,&UIP_IP_BUF->srcipaddr)) && !uip_ds6_is_my_addr(&UIP_IP_BUF->srcipaddr)){
+      if(discard_engine(7)){
+        loss_array[7]=loss_array[7]+1;
+      }
+    } 
+    if( (uip_ip6addr_cmp(&node8,&UIP_IP_BUF->srcipaddr)) && !uip_ds6_is_my_addr(&UIP_IP_BUF->srcipaddr)){
+        if(discard_engine(8)){
+        loss_array[8]=loss_array[8]+1;     
+      }
+    } 
+    if( (uip_ip6addr_cmp(&node9,&UIP_IP_BUF->srcipaddr)) && !uip_ds6_is_my_addr(&UIP_IP_BUF->srcipaddr)){
+        if(discard_engine(9)){
+          loss_array[9]=loss_array[9]+1; 
+      }
+    } 
+    if( (uip_ip6addr_cmp(&node10,&UIP_IP_BUF->srcipaddr)) && !uip_ds6_is_my_addr(&UIP_IP_BUF->srcipaddr)){
+        if(discard_engine(10)){
+          loss_array[10]=loss_array[10]+1; 
+      }
+    } 
+    if( (uip_ip6addr_cmp(&node11,&UIP_IP_BUF->srcipaddr)) && !uip_ds6_is_my_addr(&UIP_IP_BUF->srcipaddr)){
+        if(discard_engine(11)){
+          loss_array[11]=loss_array[11]+1; 
+      }
+    } 
+    if( (uip_ip6addr_cmp(&node12,&UIP_IP_BUF->srcipaddr)) && !uip_ds6_is_my_addr(&UIP_IP_BUF->srcipaddr)){
+        if(discard_engine(12)){
+          loss_array[12]=loss_array[12]+1; 
+      }
+      
+    } 
+#endif
   }
-#endif
-
-#if NETWORK_CODING
-    if (id_node == 2) { 
-      //save message if destination is the external observer given in er-example, if the server ip is fd00::::1 it activates the web browser requests
-      REQUEST_NODE(&server_ipaddr);
-      if(uip_ip6addr_cmp(&server_ipaddr,&UIP_IP_BUF->destipaddr) && !uip_ds6_is_my_addr(&UIP_IP_BUF->srcipaddr)){ 
-        printf("TESTE\n");
-        store_msg();
-     }
-    }
 #endif
 
 
@@ -925,7 +954,7 @@ PROCESS_THREAD(tcpip_process, ev, data)
 /*---------------------------------------------------------------------------*/
 
 #if NETWORK_CODING 
-/* extrat coap payloads and keep them until its time, this message is when ncoding file decides*/
+/* extract coap payloads and keep them until its time, this message is when ncoding file decides*/
 void 
 store_msg(void){
   //static target_etag=""
@@ -936,15 +965,14 @@ store_msg(void){
   /*IMPORTANT, because of max packet size in REST_MAX_CHUNK_SIZE tha max size of parsed packet is that value*/
   /*This function is used in coap receive, the size given (arg3) has to be the size of ONLY the coap packet*/
   coap_parse_message(coap_pt, &uip_buf[begin_payload_index], uip_datalen()-begin_payload_index);
-  if(coap_pt->code==69 && coap_pt->version ==1){
-      
+  if(coap_pt->code==69 && coap_pt->version ==1){     
     /*todo, messages from coded have etal of 0x0a, verify here if it is ok*/
     if(IS_OPTION(coap_pt, COAP_OPTION_ETAG)) {
       //printf("storing message, etag= %u\n",coap_pt->etag);
       /*check correct etag from coded resource, is 10*/
       if (((int)coap_pt->etag[0]==10))//etag will sufice, the ports change so do not use that, also they apear on the network order(reverse)
       {
-        add_payload(coap_pt->payload, coap_pt->mid, (uint8_t)coap_pt->payload_len, &UIP_IP_BUF->destipaddr,UIP_UDP_BUF->destport);
+        add_payload(coap_pt->payload, coap_pt->mid, (uint8_t)coap_pt->payload_len, &UIP_IP_BUF->destipaddr,UIP_UDP_BUF->destport, coap_pt);
       }
     }
       /* Drop all not self-produced packets., NOT IN THIS CASE WITH CODING
@@ -953,17 +981,15 @@ store_msg(void){
       uip_flags = 0;
       return;*/
     } 
-    
 }
 #endif
 
-#if COM_ACKS
+#if GILBERT_ELLIOT_DISCARDER
 /*
 *Returns 1 if discarded packet
 */
 int discard_engine(int _node_id){
 
-static int var=0;
 // gilbert-elliot
 // two-state markov chain
 static int discardPkt = 0;
@@ -988,6 +1014,7 @@ if (goodState) {
     // verifica se deve mudar de estado
     if ( (1+random_rand()%100) <= GoodToBad ) {
         goodState = 0;
+        
     } else {
         goodState = 1;
     }
@@ -1007,6 +1034,7 @@ if (goodState) {
         goodState = 1;
     } else {
         goodState = 0;
+        
     }
        // cout de debug 
     //cout << "BadState" << (discardPkt?"D":".") << (goodState?"+":"-") << endl;
@@ -1014,7 +1042,7 @@ if (goodState) {
 }
 // faz o descarte do pacote se necessario
   if (discardPkt) {
-      printf("Discarding packet from _node_id=%d\n",_node_id);
+      //printf("Discarding packet from _node_id=%d\n",_node_id);
       uip_len = 0;
       uip_ext_len = 0;
       uip_flags = 0;
@@ -1022,7 +1050,22 @@ if (goodState) {
       return 1;
   }
   total_forwarded++;
+  print_mid(_node_id);
   return 0;
 
+}
+
+
+
+void print_mid(int id){
+  static coap_packet_t coap_pt[1];    //allocate space for 1 packet, treat as pointer
+  static unsigned int begin_payload_index=UIP_IPUDPH_LEN+8;  // the forwarded packet has 8 more bytes(extension headers=uip_ext_len)
+  /*IMPORTANT, because of max packet size in REST_MAX_CHUNK_SIZE tha max size of parsed packet is that value*/
+  /*This function is used in coap receive, the size given (arg3) has to be the size of ONLY the coap packet*/
+  coap_parse_message(coap_pt, &uip_buf[begin_payload_index], uip_datalen()-begin_payload_index);
+  if(coap_pt->code==69 && coap_pt->version ==1){      
+      PRINTF("Node-id=%d, mid= %u\n",id,coap_pt->mid);
+      
+    } 
 }
 #endif

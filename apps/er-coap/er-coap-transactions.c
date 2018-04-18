@@ -57,11 +57,15 @@
 MEMB(transactions_memb, coap_transaction_t, COAP_MAX_OPEN_TRANSACTIONS);
 LIST(transactions_list);
 
+
+void remove_trans_element(coap_transaction_t *t);
+void coap_clear_all_transactions();
+
 static struct process *transaction_handler_process = NULL;
-unsigned int count_retrans=0;
-unsigned int count_ack=0;
-unsigned int total_coap_sent=0;
-unsigned int lostpackets=0;
+ int count_retrans=0;
+ int count_ack=0;
+ int total_coap_sent=0;
+ int lostpackets=0;
 
 /*---------------------------------------------------------------------------*/
 /*- Internal API ------------------------------------------------------------*/
@@ -134,7 +138,7 @@ coap_send_transaction(coap_transaction_t *t)
       /*densenet do not remove observers, just consider the packet lost*/
       //coap_remove_observer_by_client(&t->addr, t->port);
       lostpackets++;
-
+      count_ack--; /*this is because a cleared transaction does not always equal a confirmed transaction*/
       coap_clear_transaction(t);
 
       if(callback) {
@@ -142,6 +146,7 @@ coap_send_transaction(coap_transaction_t *t)
       }
     }
   } else {
+    PRINTF("Aqui apareceu mensagem nao confirmavel------\n");
     coap_clear_transaction(t);
   }
 }
@@ -186,3 +191,21 @@ coap_check_transactions()
   }
 }
 /*---------------------------------------------------------------------------*/
+void
+coap_clear_all_transactions()
+{
+  coap_transaction_t *t = NULL;
+ 
+
+  for(t = (coap_transaction_t *)list_head(transactions_list); t; t = t->next) {
+    PRINTF("atempting remove transaction %u: %p\n", t->mid, t);
+    remove_trans_element(t);
+  }
+}
+
+void
+remove_trans_element(coap_transaction_t *t){
+    etimer_stop(&t->retrans_timer);
+    memb_free(&transactions_memb, list_pop(transactions_list));
+}
+

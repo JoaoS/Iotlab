@@ -185,6 +185,14 @@ coap_notify_observers(resource_t *resource)
 {
   coap_notify_observers_sub(resource, NULL);
 }
+
+
+coap_observer_t* get_observers(){
+
+return (coap_observer_t *)list_head(observers_list);
+
+}
+
 void
 coap_notify_observers_sub(resource_t *resource, const char *subpath)
 {
@@ -258,7 +266,6 @@ coap_notify_observers_sub(resource_t *resource, const char *subpath)
 
         transaction->packet_len =
           coap_serialize_message(notification, transaction->packet);
-
         coap_send_transaction(transaction);
       }
     }

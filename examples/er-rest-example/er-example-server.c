@@ -43,7 +43,7 @@
 #include "contiki-net.h"
 #include "rest-engine.h"
 #include "ncoding.h"
-
+#include "er-coap.h"
 
 #if PLATFORM_HAS_BUTTON
 #include "dev/button-sensor.h"
@@ -51,7 +51,7 @@
 
 /**/
 
-static int flag=0;
+int dis_flag=0;
 static int time_f=0;
 
 #define DEBUG 0
@@ -143,7 +143,7 @@ PROCESS_THREAD(er_example_server, ev, data)
    * WARNING: Activating twice only means alternate path, not two instances!
    * All static variables are the same for each URI path.
    */
-  rest_activate_resource(&res_hello, "test/hello");
+  //rest_activate_resource(&res_hello, "test/hello");
 
 /*  rest_activate_resource(&res_mirror, "debug/mirror"); */
 /*  rest_activate_resource(&res_chunks, "test/chunks"); */
@@ -152,19 +152,19 @@ PROCESS_THREAD(er_example_server, ev, data)
 /*  rest_activate_resource(&res_event, "sensors/button"); */
 /*  rest_activate_resource(&res_sub, "test/sub"); */
 /*  rest_activate_resource(&res_b1_sep_b2, "test/b1sepb2"); */
-#if PLATFORM_HAS_LEDS
+#if 0
 /*  rest_activate_resource(&res_leds, "actuators/leds"); */
   rest_activate_resource(&res_toggle, "actuators/toggle");
 #endif
-#if PLATFORM_HAS_LIGHT
+#if 0
   rest_activate_resource(&res_light, "sensors/light"); 
   SENSORS_ACTIVATE(light_sensor);  
 #endif
-#if PLATFORM_HAS_BATTERY
+#if 0
   rest_activate_resource(&res_battery, "sensors/battery");  
   SENSORS_ACTIVATE(battery_sensor);  
 #endif
-#if PLATFORM_HAS_TEMPERATURE
+#if 0
   rest_activate_resource(&res_temperature, "sensors/temperature");  
   SENSORS_ACTIVATE(temperature_sensor);  
 #endif
@@ -181,8 +181,8 @@ PROCESS_THREAD(er_example_server, ev, data)
   /*************************densenet**************************/
   rest_activate_resource(&res_coded, "coded");/*activate the resouce we want*/   
 
-#if PERIODIC_MESSAGE
-if (id_node > 6){
+#if 0
+
   static struct etimer add_obs_timer;
   etimer_set(&add_obs_timer, CLOCK_SECOND*25); // set timer to add the observers
   PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&add_obs_timer));
@@ -192,19 +192,21 @@ if (id_node > 6){
   uip_ipaddr_t dest_addr;
   //const char *uri="test/hello";
 
-    addr_test[0] = 0xfd00;
-    addr_test[4] = 0x0000;
-    addr_test[5] = 0x0000;
-    addr_test[6] = 0x9000;
-    addr_test[7] = 0x0001;
+    addr_test[0] = 0x2001;
+    addr_test[1] = 0x818;
+    addr_test[2] = 0xdbf8;
+    addr_test[3] = 0x7000;
+    addr_test[4] = 0x185c;
+    addr_test[5] = 0x78d5;
+    addr_test[6] = 0x72e8;
+    addr_test[7] = 0xdd2c;
+    //2001:818:dbf8:7000:185c:78d5:72e8:dd2c
     
     uip_ip6addr(&dest_addr, addr_test[0], addr_test[1], addr_test[2],
     addr_test[3], addr_test[4],addr_test[5],addr_test[6],addr_test[7]);
   
     printf("Calling coap_add_observer \n");
     add_observer(&dest_addr,0,0,0,"coded",5);
-
-  }
 #endif
   /*************************densenet**************************/
   static struct etimer reset_stats;
@@ -212,13 +214,17 @@ if (id_node > 6){
 
 
   static struct etimer stats;
-  etimer_set(&stats, CLOCK_SECOND*60); // print statistics
+  etimer_set(&stats, (WARMUP_DISCARD+300)*CLOCK_SECOND); // print statistics
   /* Define application-specific events here. */
   while(1) {
     PROCESS_WAIT_EVENT();
     
-    if (etimer_expired(&reset_stats) && flag==0)/*just one execution, add flag or else the condition always executes*/
+    if (etimer_expired(&reset_stats) && dis_flag==0)/*just one execution, add flag or else the condition always executes*/
     {
+      #if NETWORK_CODING
+      free_data();
+      #endif
+      coap_clear_all_transactions();/*delete for isolation*/
       count_retrans=0;
       count_ack=0;
       total_coap_sent=0;
@@ -226,8 +232,9 @@ if (id_node > 6){
       from_node4=0;
       total_forwarded=0;
       total_dropped=0;
-      printf("%d minute discard, reset variables\n",time_f);
-      flag=1;
+      lostpackets=0;
+      dis_flag=1;
+      printf("(%d second discard)\n",WARMUP_DISCARD);
     }
     
     /*prepare new message and send it to external IP address*/
@@ -238,14 +245,24 @@ if (id_node > 6){
     }
     if (etimer_expired(&stats))
     {
-      time_f = time_f+1;
-      etimer_reset(&stats);
-      printf("(%d minute)discarded at node_3=(%u), discarded_node_4=(%u) total_forwarded=(%u), total_dropped=(%u)\n",time_f,from_node3,from_node4,total_forwarded,total_dropped);
-      if (time_f==7)
+      int i=0;
+      if (total_coap_sent>0)
       {
-        printf("(%d minute)retrans=(%u), confirmed messages=(%u) sent coap messages(include retrans)=(%u) lostpackets(at producers)=(%u)\n",time_f,count_retrans,count_ack,total_coap_sent,lostpackets);
-        //printf("(%u minute)discarded at node 3=%u, discarded_node 4=(%u) total_forwarded=(%u), total_dropped=(%u)\n",time_f,from_node3,from_node4,total_forwarded,total_dropped);
+      printf("(%d minute)retrans=(%d), confirmed messages=(%d) sent coap messages(include retrans)=(%d) lostpackets(at producers)=(%d)\n"
+        ,WARMUP_DISCARD+300,count_retrans,count_ack,total_coap_sent,lostpackets);
       }
+    #if GILBERT_ELLIOT_DISCARDER
+      printf("total_forwarded=(%d), total_dropped=(%d) ",total_forwarded,total_dropped);
+    for (i = 0; i < ELEMENTS; ++i)
+    {
+      if (loss_array[i]!=0)
+      {
+        printf("discarded at node %d=(%d) ",i,loss_array[i]);
+      }
+    }      
+    printf("\n");
+    #endif     
+      etimer_reset(&stats);
 
     }
 

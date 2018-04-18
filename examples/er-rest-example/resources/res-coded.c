@@ -13,7 +13,7 @@
 #include "random.h"
 #include "ncoding.h"
 
-#define DEBUG 0
+#define DEBUG 1
 #if DEBUG
 #include <stdio.h>
 #define PRINTF(...) printf(__VA_ARGS__)
@@ -57,7 +57,7 @@ res_get_handler(void *request, void *response, uint8_t *buffer, uint16_t preferr
 
   temperature = 1+ random_rand() % 35;
   REST.set_header_etag(response, (uint8_t *)&seed, 1);/*this signals the message has been coded*/
-  PRINTF("Prefered size =%u\ntemperature = %u\n",preferred_size, temperature);
+  PRINTF("Temperature = %u\n", temperature);
   REST.set_response_payload(response, buffer, snprintf((char *)buffer, preferred_size, "%u", temperature));
   
  

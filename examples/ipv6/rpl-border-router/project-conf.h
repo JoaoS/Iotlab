@@ -32,8 +32,8 @@
 #define PROJECT_ROUTER_CONF_H_
 
 /*also limit br router power so other nodes do not apear as neighbours*/
-#undef RF2XX_TX_POWER
-#define RF2XX_TX_POWER  0x0F 
+//#undef RF2XX_TX_POWER
+//#define RF2XX_TX_POWER  0x0F 
 
 #ifndef WITH_NON_STORING
 #define WITH_NON_STORING 0 /* Set this to run with non-storing mode */
