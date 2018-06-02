@@ -41,56 +41,56 @@
 
 /*densenet: network coding mechanism*/
 /*add files for packet capturing and network coding functions*/
-
-#define SEND_MESSAGE_INTERVAL 20    /*interval to send coded resource messages*/
-#define WARMUP_DISCARD 190          /*DISCARD FIRST X SECONDS OF STATISTICS*/
-
-#define NETWORK_CODING 0            /*activates packet capturing and network coding mechanism */
-#define MAX_CODED_PAYLOADS 10        /* space in number of packets in the buffer to code*/
-#define TRIGGERPACKETS 2            /*number of packets that trigger a coded message*/
-#define OBS_REFRESH_INTERVAL 1      /*interval of ack in messages, 1 to allways confirmable*/
-#define MAX_RETRANS 4               /*max number of retransmissions of a single message*/
-
 /*variables to gather experiments data*/
 extern  int count_retrans;
 extern  int count_ack;
 extern  int total_coap_sent; /*number of coap messages sent including retransmissions*/
-
 /*variables for the gilbert elliot discard statistics*/
 extern  int total_forwarded;
 extern  int total_dropped;
 extern  int from_node3;
 extern  int from_node4;
 extern  int lostpackets;
+
 #define ELEMENTS 13
 extern  int loss_array[ELEMENTS];
 
-
-
-/*flag for stats reset and discarder, if its one discarding begins */
+/*fag forlafgts reset and discarder, if its one discarding begins */
 extern  int dis_flag;
 
+
+#define SEND_MESSAGE_INTERVAL 1    /*interval to send coded resource messages*/
+#define WARMUP_DISCARD 190          /*DISCARD FIRST X SECONDS OF STATISTICS*/
+#define MAX_CODED_PAYLOADS 30        /* space in number of packets in the buffer to code*/
+#define TRIGGERPACKETS 2        /*number of packets that trigger a coded message*/
+#define OBS_REFRESH_INTERVAL 700      /*interval of ack in messages, 1 to allways confirmable*/
+#define MAX_RETRANS 4               /*max number of retransmissions of a single message*/
+#define COM_ACKS 1 /*TO ADD HEADER AND FUNCTION DECLARATIONS IN TCPIP*/
 /*gilber elliot transition probabilities from 0 to 100*/
-#define GoodToBad 3
-#define BadToGood 84
+#define GoodToBad 11
+#define BadToGood 45
 /*
 n1-   3/84
 n2-   25/42
 n3-   43/25
 n4-   80/7
 */
+/*logic, use discarded and coding + iotlab for iotlab, when testing in cooja change flags cooja exp */
+#define NETWORK_CODING 0            /*activates packet capturing and network coding mechanism */
 #define COOJA_EXP 0     /*use this to apply configurations for development in cooja*/
 #define IOTLAB 1        /*reduces power and other stuff for testing in iotlab*/
 #define HARDCODED_TOPOLOGY 1 /*static routing*/
-#define COM_ACKS 1 /*TO ADD HEADER AND FUNCTION DECLARATIONS IN TCPIP*/
-#define GILBERT_ELLIOT_DISCARDER 1     /*this macro sends packets to loss model*/
+#define GILBERT_ELLIOT_DISCARDER 1    /*this macro sends packets to loss model*/
 //#define REQUEST_NODE(ipaddr)   uip_ip6addr(ipaddr, 0x2001, 0x0660, 0x5307, 0x3111, 0, 0, 0 , 0x0001) 
 
-
+#if GILBERT_ELLIOT_DISCARDER
+extern  int local_loss; /*the coded messages can also be lost, count the lost coded messages*/
+extern  int sent_coded;
+#endif
 #if IOTLAB
 //#define RPL_UPDATE_INTERVAL 600 //testing in net/rpl/conf
 #if HARDCODED_TOPOLOGY
-#define PARENT_IP "fe80::2760"
+#define PARENT_IP "fe80::2661"
 #define NODE_7_IP 0x2453
 #define NODE_8_IP 0x2061
 #define NODE_9_IP 0x2460
@@ -100,9 +100,8 @@ n4-   80/7
 #endif
 //#undef NETSTACK_CONF_RDC_CHANNEL_CHECK_RATE
 //#define NETSTACK_CONF_RDC_CHANNEL_CHECK_RATE 8
-//#undef RF2XX_TX_POWER
-//#define RF2XX_TX_POWER  0x0F  //PHY_POWER_m12dBm, before lowest level of power(0,1,2,3,4(0x0A),5(B),7(C),9(D),12(E),17(F))
-
+#undef RF2XX_TX_POWER
+#define RF2XX_TX_POWER  0x0F  //PHY_POWER_m12dBm, before lowest level of power(0,1,2,3,4(0x0A),5(B),7(C),9(D),12(E),17(F))
 #endif
 
 /*for doing tests in coojs and debugging*/

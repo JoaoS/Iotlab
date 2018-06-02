@@ -234,6 +234,8 @@ PROCESS_THREAD(er_example_server, ev, data)
       total_dropped=0;
       lostpackets=0;
       dis_flag=1;
+      local_loss=0;
+      sent_coded=0;
       printf("(%d second discard)\n",WARMUP_DISCARD);
     }
     
@@ -260,7 +262,7 @@ PROCESS_THREAD(er_example_server, ev, data)
         printf("discarded at node %d=(%d) ",i,loss_array[i]);
       }
     }      
-    printf("\n");
+    printf(" local discarded-coded=%d, sent coded=%d\n",local_loss,sent_coded);
     #endif     
       etimer_reset(&stats);
 

@@ -741,6 +741,7 @@ static void reset(void)
 {
     uint8_t reg;
     int rf_tx_power = convert_power(RF2XX_TX_POWER);
+    printf("TRANSMISSION POWER = %x \n",RF2XX_TX_POWER );
 
     // Stop any Asynchronous access
     rf2xx_fifo_access_cancel(RF2XX_DEVICE);

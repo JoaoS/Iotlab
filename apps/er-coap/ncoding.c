@@ -5,6 +5,7 @@
 #include <string.h>
 #include "ncoding.h"
 #include "er-coap-observe.h"
+#include "er-coap-observe.h"
 
 #define DEBUG 0
 #if DEBUG
@@ -16,9 +17,9 @@
 
 MEMB(coded_memb, s_message_t, MAX_CODED_PAYLOADS);
 LIST(coded_list); /*points to saved packets*/
-
+int local_loss=0;  //for the lost coded messages
+int sent_coded=0;
 static int totalcounter=1;
-
 /**/
 void add_payload(uint8_t *incomingPayload, uint16_t mid, uint8_t len, uip_ipaddr_t * destaddr, uint16_t dport, coap_packet_t * coap_pt ){
 	
@@ -57,15 +58,33 @@ void send_coded(resource_t *resource){
   static coap_packet_t notification[1]; /* this way the packet can be treated as pointer as usual */
   static s_message_t * destination=NULL;
   coap_init_message(notification, COAP_TYPE_NON, CONTENT_2_05, 0); //to be sent
-  
   coap_transaction_t *transaction = NULL;
   coap_observer_t * obs = (coap_observer_t *)get_observers();
-
   //for now there is just one subscriber
   destination = (s_message_t *)list_head(coded_list);
-  
+
+  int messages_num=0; //number of messages in the list
+  int cycles=0;
+  s_message_t * mlist=NULL;  
+  int counter=0;
+  int will_discard=0;
   if (obs)
   {
+  	/*check for number of messages and cycle in groups of two
+  	for (mlist = (s_message_t *)list_head(coded_list); mlist ;mlist=mlist->next){
+  		messages_num++;
+  	}
+  	printf("MESSAGES IN THE BUFFER =%d, ",messages_num );
+  	*/
+	//ALSO DISCARD MESSAGES THAT ARE CODED
+	will_discard=discard_engine(0); /*return 1 if the packet is to be discarded*/
+	if (will_discard==1){
+		local_loss=local_loss+1;
+		//printf("LOCAL LOSS SENDING FUNCTION =%d\n",local_loss );
+		free_data();  	//check for number of messages and cycle in groups of two
+		return;
+	}
+	if(!will_discard) {/*negate because 1 equals packet discarded*/
   	  //the destination port is the same as the first saved message/*
 	  if((transaction = coap_new_transaction(destination->mid, &obs->addr, obs->port))) {
 	    // prepare response 
@@ -81,6 +100,7 @@ void send_coded(resource_t *resource){
 	    	coap_set_token(notification, destination->token, destination->token_len);
 	    }
 	    transaction->packet_len = coap_serialize_message(notification, transaction->packet);
+	    sent_coded=sent_coded+1;
 	    coap_send_transaction(transaction);
 	    }
 		/*/
@@ -100,7 +120,9 @@ void send_coded(resource_t *resource){
 		    transaction->packet_len = coap_serialize_message(notification, transaction->packet);
 	        coap_send_transaction(transaction);
 	      }
-	      /**/
+	      */
+	    }
+
 	}
 
     //clean buffer
@@ -118,12 +140,16 @@ void create_xor(void *response, uint8_t *buffer, uint16_t preferred_size){
 	uint8_t rmid=0;
 	packetnumber=mid_pointer=0;
 	memset(xored_data, 0, sizeof(xored_data));
-
+	int i=0;
 
 
 		//first mid then all payloads xored
 	for(destination = (s_message_t *)list_head(coded_list); destination; destination = destination->next) {
 
+		if (i==TRIGGERPACKETS)
+		{
+			break;
+		}
 		/*i use this method instead of memcpy uint16_t to prevent the change in byte order due to endianess of cpu*/
 		rmid	=(destination->mid & 0xFF00 ) >>8;
 		//snprintf uses number of characters so each number is 1 byte; do not use, because human readable uses extra space
@@ -143,6 +169,7 @@ void create_xor(void *response, uint8_t *buffer, uint16_t preferred_size){
 			xored_data[0] ^= destination->data[0];  //xor 1 st byte
 			xored_data[1] ^= destination->data[1];
 		}
+		i++;
 
 	}
 
@@ -156,11 +183,8 @@ void create_xor(void *response, uint8_t *buffer, uint16_t preferred_size){
 }
 
 void free_data(void){
-
 	s_message_t * mlist=NULL;  
-
 	PRINTF("clearing coded \n");
- 
  	for(mlist = (s_message_t *)list_head(coded_list); mlist ;mlist=mlist->next) {
     remove_element(mlist);
   }

@@ -96,12 +96,12 @@ print_ipv6_addr(const uip_ipaddr_t *ip_addr) {
     }
 }
 int id_node; /*for cooja id nodes*/
- int total_forwarded=0;
- int total_dropped=0;
- int from_node3=0;
- int from_node4=0;
+int total_forwarded=0;
+int total_dropped=0;
+int from_node3=0;
+int from_node4=0;
 void print_mid();
-int discard_engine(int _node_id);
+;
 int loss_array[ELEMENTS]={0};
 #endif
 /* code ends*/
@@ -246,9 +246,11 @@ packet_input(void)
   uip_ip6addr(&node11, 0x2001, 0x0660, 0x3207, 0x04c0, 0, 0, 0 , NODE_11_IP);
   uip_ip6addr(&node12, 0x2001, 0x0660, 0x3207, 0x04c0, 0, 0, 0 , NODE_12_IP);
   
-
-  //uip_ip6addr(&node3, 0xfd00, 0, 0, 0, 200, 0, 0 , 0x0003);
-  //uip_ip6addr(&node4, 0xfd00, 0, 0, 0, 200, 0, 0 , 0x0004);
+  #if COOJA_EXP //for cooja nodes
+  static uip_ipaddr_t node4,node4;
+  uip_ip6addr(&node3, 0xfd00, 0, 0, 0, 200, 0, 0 , 0x0003);
+  uip_ip6addr(&node4, 0xfd00, 0, 0, 0, 200, 0, 0 , 0x0004);
+  #endif
   /*if (!dis_flag) //debug prints
   {
     
@@ -261,14 +263,23 @@ packet_input(void)
       print_mid(4);
     } 
   }*/
-  #if NETWORK_CODING
+  #if NETWORK_CODING && !COOJA_EXP
         //save message if destination is the external observer given in er-example, if the server ip is fd00::::1 it activates the web browser requests
-    if((uip_ip6addr_cmp(&node4,&UIP_IP_BUF->srcipaddr) || uip_ip6addr_cmp(&node3,&UIP_IP_BUF->srcipaddr)) && !uip_ds6_is_my_addr(&UIP_IP_BUF->srcipaddr)){ 
+    if((uip_ip6addr_cmp(&node7,&UIP_IP_BUF->srcipaddr) || uip_ip6addr_cmp(&node8,&UIP_IP_BUF->srcipaddr) || 
+     uip_ip6addr_cmp(&node9,&UIP_IP_BUF->srcipaddr) || uip_ip6addr_cmp(&node10,&UIP_IP_BUF->srcipaddr) || 
+     uip_ip6addr_cmp(&node11,&UIP_IP_BUF->srcipaddr) || uip_ip6addr_cmp(&node12,&UIP_IP_BUF->srcipaddr)
+     ) && !uip_ds6_is_my_addr(&UIP_IP_BUF->srcipaddr))
+    { 
       //printf("TESTE\n");
       store_msg();
     }
 #endif
-  
+#if NETWORK_CODING && COOJA_EXP
+if ((uip_ip6addr_cmp(&node3,&UIP_IP_BUF->srcipaddr) || (uip_ip6addr_cmp(&node4,&UIP_IP_BUF->srcipaddr))
+{
+  store_msg();
+}
+#endif  
   if (dis_flag) // set in er-rest-example
   {
 #if GILBERT_ELLIOT_DISCARDER /*here print the retransmission and drop if conditions are met*/
@@ -301,8 +312,8 @@ packet_input(void)
         if(discard_engine(12)){
           loss_array[12]=loss_array[12]+1; 
       }
-      
-    } 
+    }
+
 #endif
   }
 #endif
@@ -1043,19 +1054,21 @@ if (goodState) {
 // faz o descarte do pacote se necessario
   if (discardPkt) {
       //printf("Discarding packet from _node_id=%d\n",_node_id);
-      uip_len = 0;
-      uip_ext_len = 0;
-      uip_flags = 0;
-      total_dropped+=1;
+      if (_node_id!=0){
+        uip_len = 0;
+        uip_ext_len = 0;
+        uip_flags = 0;
+        total_dropped+=1;
+      }
       return 1;
   }
-  total_forwarded++;
-  print_mid(_node_id);
+  if(_node_id!=0)
+  {
+    total_forwarded++; /*messages from the node itself are not counted here*/
+    print_mid(_node_id);
+  }
   return 0;
-
 }
-
-
 
 void print_mid(int id){
   static coap_packet_t coap_pt[1];    //allocate space for 1 packet, treat as pointer

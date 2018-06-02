@@ -69,6 +69,9 @@
 
 #include "contiki.h"
 
+int discard_engine(int _node_id);
+
+
 struct uip_conn;
 
 struct tcpip_uipstate {
