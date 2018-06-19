@@ -15,11 +15,16 @@
 #define PRINTF(...)
 #endif
 
+void trigger_message(int num);
+void free_two_data(void);
+
 MEMB(coded_memb, s_message_t, MAX_CODED_PAYLOADS);
 LIST(coded_list); /*points to saved packets*/
 int local_loss=0;  //for the lost coded messages
 int sent_coded=0;
 static int totalcounter=1;
+int losses=0;
+
 /**/
 void add_payload(uint8_t *incomingPayload, uint16_t mid, uint8_t len, uip_ipaddr_t * destaddr, uint16_t dport, coap_packet_t * coap_pt ){
 	
@@ -46,10 +51,22 @@ void add_payload(uint8_t *incomingPayload, uint16_t mid, uint8_t len, uip_ipaddr
 	else
 		printf("ERROR ALOCATING MEMORY FOR PACKET\n");
 
-	if(list_length(coded_list) % TRIGGERPACKETS == 0){//signal for coded message
+//printf("len lista=%d\n",list_length(coded_list) );
+	/*if(list_length(coded_list) % TRIGGERPACKETS == 0){//signal for coded message
+		process_post(PROCESS_BROADCAST,coding_event, NULL);
+	}*/
+}
+int get_coded_len(void){
+	return list_length(coded_list);
+}
+void trigger_message(int num){
+	if(list_length(coded_list) == 3){//signal for coded message
+		losses=num;
+		//printf("yoyoyo\n");
 		process_post(PROCESS_BROADCAST,coding_event, NULL);
 	}
 }
+
 
 /*construct and send a coded message, clean stored data afterwards*/
 void send_coded(resource_t *resource){
@@ -73,18 +90,18 @@ void send_coded(resource_t *resource){
   	/*check for number of messages and cycle in groups of two
   	for (mlist = (s_message_t *)list_head(coded_list); mlist ;mlist=mlist->next){
   		messages_num++;
-  	}
-  	printf("MESSAGES IN THE BUFFER =%d, ",messages_num );
-  	*/
+  	}*/
+
+
 	//ALSO DISCARD MESSAGES THAT ARE CODED
 	will_discard=discard_engine(0); /*return 1 if the packet is to be discarded*/
-	if (will_discard==1){
+	if (will_discard==1 && losses == 1){
 		local_loss=local_loss+1;
 		//printf("LOCAL LOSS SENDING FUNCTION =%d\n",local_loss );
-		free_data();  	//check for number of messages and cycle in groups of two
+		free_two_data();  	//check for number of messages and cycle in groups of two
 		return;
 	}
-	if(!will_discard) {/*negate because 1 equals packet discarded*/
+	if(!will_discard && losses == 1) {/*negate because 1 equals packet discarded*/
   	  //the destination port is the same as the first saved message/*
 	  if((transaction = coap_new_transaction(destination->mid, &obs->addr, obs->port))) {
 	    // prepare response 
@@ -93,7 +110,7 @@ void send_coded(resource_t *resource){
 	    if(notification->code < BAD_REQUEST_4_00) {
 	        coap_set_header_observe(notification, destination->observe);
 	    }
-	    printf("send message mid=%u, OBSERVE=%ld\n",destination->mid,destination->observe );
+	    //printf("send message mid=%u, OBSERVE=%ld\n",destination->mid,destination->observe );
 	    if (destination->token_len > 0)
 	    {
 	    	PRINTF("COAP token len=%u, token=%02x%02x%02x%02x \n",destination->token_len,destination->token[0],destination->token[1],destination->token[2],destination->token[3]);
@@ -124,10 +141,9 @@ void send_coded(resource_t *resource){
 	    }
 
 	}
-
     //clean buffer
     //printf("cleaning data\n");
-	free_data();
+	free_two_data();
  	PRINTF("free=%d\n",memb_numfree(&coded_memb));
 }
 
@@ -202,4 +218,20 @@ void remove_element(s_message_t * o){
 	memb_free(&coded_memb, list_pop(coded_list));
 	//memb_free(&coded_list, o);
   //list_remove(coded_list,o); /*has to be pop so cycle does not loop*/  
+}
+
+void free_two_data(void){
+  s_message_t * mlist=NULL; 
+  int i=0; 
+  PRINTF("clearing coded \n");
+  for(mlist = (s_message_t *)list_head(coded_list); mlist ;mlist=mlist->next) {
+    
+    if (i==TRIGGERPACKETS)
+    {
+      break;
+    }
+    remove_element(mlist);
+    i++;
+  }
+
 }

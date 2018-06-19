@@ -63,24 +63,18 @@ extern  int dis_flag;
 #define WARMUP_DISCARD 190          /*DISCARD FIRST X SECONDS OF STATISTICS*/
 #define MAX_CODED_PAYLOADS 30        /* space in number of packets in the buffer to code*/
 #define TRIGGERPACKETS 2        /*number of packets that trigger a coded message*/
-#define OBS_REFRESH_INTERVAL 700      /*interval of ack in messages, 1 to allways confirmable*/
+#define OBS_REFRESH_INTERVAL 1      /*interval of ack in messages, 1 to allways confirmable*/
 #define MAX_RETRANS 4               /*max number of retransmissions of a single message*/
 #define COM_ACKS 1 /*TO ADD HEADER AND FUNCTION DECLARATIONS IN TCPIP*/
 /*gilber elliot transition probabilities from 0 to 100*/
 #define GoodToBad 11
 #define BadToGood 45
-/*
-n1-   3/84
-n2-   25/42
-n3-   43/25
-n4-   80/7
-*/
 /*logic, use discarded and coding + iotlab for iotlab, when testing in cooja change flags cooja exp */
 #define NETWORK_CODING 0            /*activates packet capturing and network coding mechanism */
 #define COOJA_EXP 0     /*use this to apply configurations for development in cooja*/
 #define IOTLAB 1        /*reduces power and other stuff for testing in iotlab*/
 #define HARDCODED_TOPOLOGY 1 /*static routing*/
-#define GILBERT_ELLIOT_DISCARDER 1    /*this macro sends packets to loss model*/
+#define GILBERT_ELLIOT_DISCARDER 0    /*this macro sends packets to loss model*/
 //#define REQUEST_NODE(ipaddr)   uip_ip6addr(ipaddr, 0x2001, 0x0660, 0x5307, 0x3111, 0, 0, 0 , 0x0001) 
 
 #if GILBERT_ELLIOT_DISCARDER
@@ -90,7 +84,15 @@ extern  int sent_coded;
 #if IOTLAB
 //#define RPL_UPDATE_INTERVAL 600 //testing in net/rpl/conf
 #if HARDCODED_TOPOLOGY
-#define PARENT_IP "fe80::2661"
+#define PARENT_IP "fe80::2460"
+#define NODE_1_IP 0x2053
+#define NODE_2_IP 0x2661
+#define NODE_3_IP 0x1160
+#define NODE_4_IP 0x2353
+#define NODE_5_IP 0xc374
+#define NODE_6_IP 0x2760
+
+//reverse node order because  c374 malfunction
 #define NODE_7_IP 0x2453
 #define NODE_8_IP 0x2061
 #define NODE_9_IP 0x2460
@@ -100,8 +102,10 @@ extern  int sent_coded;
 #endif
 //#undef NETSTACK_CONF_RDC_CHANNEL_CHECK_RATE
 //#define NETSTACK_CONF_RDC_CHANNEL_CHECK_RATE 8
+/*
 #undef RF2XX_TX_POWER
 #define RF2XX_TX_POWER  0x0F  //PHY_POWER_m12dBm, before lowest level of power(0,1,2,3,4(0x0A),5(B),7(C),9(D),12(E),17(F))
+*/
 #endif
 
 /*for doing tests in coojs and debugging*/

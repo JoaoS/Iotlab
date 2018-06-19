@@ -28,6 +28,7 @@ typedef struct s_message{
 	int32_t observe;
   	uint8_t token_len;
   	uint8_t token[COAP_TOKEN_LEN];
+  	int discarded;
 
 }s_message_t;
 

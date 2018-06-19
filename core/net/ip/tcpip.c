@@ -107,6 +107,8 @@ int loss_array[ELEMENTS]={0};
 /* code ends*/
 #if NETWORK_CODING   
 void store_msg(void);
+int netpackets=0;
+int smart_coding=0;
 #endif
 
 
@@ -239,6 +241,14 @@ packet_input(void)
     uip_input();
 #if HARDCODED_TOPOLOGY
   static uip_ipaddr_t node7,node8,node9,node10,node11,node12;
+  static uip_ipaddr_t node1,node2,node3,node4,node5,node6;
+  uip_ip6addr(&node1, 0x2001, 0x0660, 0x3207, 0x04c0, 0, 0, 0 , NODE_1_IP);
+  uip_ip6addr(&node2, 0x2001, 0x0660, 0x3207, 0x04c0, 0, 0, 0 , NODE_2_IP);
+  uip_ip6addr(&node3, 0x2001, 0x0660, 0x3207, 0x04c0, 0, 0, 0 , NODE_3_IP);
+  uip_ip6addr(&node4, 0x2001, 0x0660, 0x3207, 0x04c0, 0, 0, 0 , NODE_4_IP);
+  uip_ip6addr(&node5, 0x2001, 0x0660, 0x3207, 0x04c0, 0, 0, 0 , NODE_5_IP);
+  uip_ip6addr(&node6, 0x2001, 0x0660, 0x3207, 0x04c0, 0, 0, 0 , NODE_6_IP);
+  //
   uip_ip6addr(&node7, 0x2001, 0x0660, 0x3207, 0x04c0, 0, 0, 0 , NODE_7_IP);
   uip_ip6addr(&node8, 0x2001, 0x0660, 0x3207, 0x04c0, 0, 0, 0 , NODE_8_IP);
   uip_ip6addr(&node9, 0x2001, 0x0660, 0x3207, 0x04c0, 0, 0, 0 , NODE_9_IP);
@@ -251,6 +261,12 @@ packet_input(void)
   uip_ip6addr(&node3, 0xfd00, 0, 0, 0, 200, 0, 0 , 0x0003);
   uip_ip6addr(&node4, 0xfd00, 0, 0, 0, 200, 0, 0 , 0x0004);
   #endif
+  #if NETWORK_CODING && COOJA_EXP
+  if ((uip_ip6addr_cmp(&node3,&UIP_IP_BUF->srcipaddr) || (uip_ip6addr_cmp(&node4,&UIP_IP_BUF->srcipaddr)){
+    store_msg();
+  }
+  #endif  
+
   /*if (!dis_flag) //debug prints
   {
     
@@ -265,24 +281,65 @@ packet_input(void)
   }*/
   #if NETWORK_CODING && !COOJA_EXP
         //save message if destination is the external observer given in er-example, if the server ip is fd00::::1 it activates the web browser requests
-    if((uip_ip6addr_cmp(&node7,&UIP_IP_BUF->srcipaddr) || uip_ip6addr_cmp(&node8,&UIP_IP_BUF->srcipaddr) || 
-     uip_ip6addr_cmp(&node9,&UIP_IP_BUF->srcipaddr) || uip_ip6addr_cmp(&node10,&UIP_IP_BUF->srcipaddr) || 
-     uip_ip6addr_cmp(&node11,&UIP_IP_BUF->srcipaddr) || uip_ip6addr_cmp(&node12,&UIP_IP_BUF->srcipaddr)
+    if((uip_ip6addr_cmp(&node1,&UIP_IP_BUF->srcipaddr) || uip_ip6addr_cmp(&node2,&UIP_IP_BUF->srcipaddr) ||
+      uip_ip6addr_cmp(&node3,&UIP_IP_BUF->srcipaddr) || uip_ip6addr_cmp(&node4,&UIP_IP_BUF->srcipaddr) ||
+      uip_ip6addr_cmp(&node5,&UIP_IP_BUF->srcipaddr) || uip_ip6addr_cmp(&node6,&UIP_IP_BUF->srcipaddr) ||
+      uip_ip6addr_cmp(&node7,&UIP_IP_BUF->srcipaddr) || uip_ip6addr_cmp(&node8,&UIP_IP_BUF->srcipaddr) || 
+      uip_ip6addr_cmp(&node9,&UIP_IP_BUF->srcipaddr) || uip_ip6addr_cmp(&node10,&UIP_IP_BUF->srcipaddr) || 
+      uip_ip6addr_cmp(&node11,&UIP_IP_BUF->srcipaddr) || uip_ip6addr_cmp(&node12,&UIP_IP_BUF->srcipaddr)
      ) && !uip_ds6_is_my_addr(&UIP_IP_BUF->srcipaddr))
     { 
       //printf("TESTE\n");
       store_msg();
+      netpackets=get_coded_len();
+      //printf("netpackets=%d\n",netpackets );
+      if(netpackets == 3)
+      {
+
+        trigger_message(smart_coding);
+        smart_coding=0;
+      }/*else if (netpackets==3 && temp!=2 ){
+        netpackets=1;
+        smart_coding[0]=0;
+        free_two_data();
+      }*/
     }
 #endif
-#if NETWORK_CODING && COOJA_EXP
-if ((uip_ip6addr_cmp(&node3,&UIP_IP_BUF->srcipaddr) || (uip_ip6addr_cmp(&node4,&UIP_IP_BUF->srcipaddr))
-{
-  store_msg();
-}
-#endif  
-  if (dis_flag) // set in er-rest-example
-  {
+ // if (dis_flag) // set in er-rest-example
+ // {
 #if GILBERT_ELLIOT_DISCARDER /*here print the retransmission and drop if conditions are met*/
+//reverse ips   
+    if( (uip_ip6addr_cmp(&node1,&UIP_IP_BUF->srcipaddr)) && !uip_ds6_is_my_addr(&UIP_IP_BUF->srcipaddr)){
+          if(discard_engine(1)){
+            loss_array[1]=loss_array[1]+1;
+        }
+      } 
+    if( (uip_ip6addr_cmp(&node2,&UIP_IP_BUF->srcipaddr)) && !uip_ds6_is_my_addr(&UIP_IP_BUF->srcipaddr)){
+          if(discard_engine(2)){
+            loss_array[2]=loss_array[2]+1;
+        }
+      } 
+    if( (uip_ip6addr_cmp(&node3,&UIP_IP_BUF->srcipaddr)) && !uip_ds6_is_my_addr(&UIP_IP_BUF->srcipaddr)){
+      if(discard_engine(3)){
+        loss_array[3]=loss_array[3]+1;
+      }
+    }   
+    if( (uip_ip6addr_cmp(&node4,&UIP_IP_BUF->srcipaddr)) && !uip_ds6_is_my_addr(&UIP_IP_BUF->srcipaddr)){
+      if(discard_engine(4)){
+        loss_array[4]=loss_array[4]+1;
+      }
+    }   
+    if( (uip_ip6addr_cmp(&node5,&UIP_IP_BUF->srcipaddr)) && !uip_ds6_is_my_addr(&UIP_IP_BUF->srcipaddr)){
+      if(discard_engine(5)){
+        loss_array[5]=loss_array[5]+1;
+      }
+    }
+    if( (uip_ip6addr_cmp(&node6,&UIP_IP_BUF->srcipaddr)) && !uip_ds6_is_my_addr(&UIP_IP_BUF->srcipaddr)){
+      if(discard_engine(6)){
+        loss_array[6]=loss_array[6]+1;
+      }
+    }  
+//old ips    
     if( (uip_ip6addr_cmp(&node7,&UIP_IP_BUF->srcipaddr)) && !uip_ds6_is_my_addr(&UIP_IP_BUF->srcipaddr)){
       if(discard_engine(7)){
         loss_array[7]=loss_array[7]+1;
@@ -290,7 +347,7 @@ if ((uip_ip6addr_cmp(&node3,&UIP_IP_BUF->srcipaddr) || (uip_ip6addr_cmp(&node4,&
     } 
     if( (uip_ip6addr_cmp(&node8,&UIP_IP_BUF->srcipaddr)) && !uip_ds6_is_my_addr(&UIP_IP_BUF->srcipaddr)){
         if(discard_engine(8)){
-        loss_array[8]=loss_array[8]+1;     
+        loss_array[8]=loss_array[8]+1;  
       }
     } 
     if( (uip_ip6addr_cmp(&node9,&UIP_IP_BUF->srcipaddr)) && !uip_ds6_is_my_addr(&UIP_IP_BUF->srcipaddr)){
@@ -305,17 +362,17 @@ if ((uip_ip6addr_cmp(&node3,&UIP_IP_BUF->srcipaddr) || (uip_ip6addr_cmp(&node4,&
     } 
     if( (uip_ip6addr_cmp(&node11,&UIP_IP_BUF->srcipaddr)) && !uip_ds6_is_my_addr(&UIP_IP_BUF->srcipaddr)){
         if(discard_engine(11)){
-          loss_array[11]=loss_array[11]+1; 
+          loss_array[11]=loss_array[11]+1;
       }
     } 
     if( (uip_ip6addr_cmp(&node12,&UIP_IP_BUF->srcipaddr)) && !uip_ds6_is_my_addr(&UIP_IP_BUF->srcipaddr)){
         if(discard_engine(12)){
-          loss_array[12]=loss_array[12]+1; 
+          loss_array[12]=loss_array[12]+1;
       }
     }
 
 #endif
-  }
+  //}
 #endif
 
 
@@ -1000,20 +1057,10 @@ store_msg(void){
 *Returns 1 if discarded packet
 */
 int discard_engine(int _node_id){
-
-// gilbert-elliot
-// two-state markov chain
 static int discardPkt = 0;
 static int goodState = 1;
-
-// todos os valores vao de 0% a 100%
-// quantidade de perdas no estado Good
 static int LostInGood = 0;
-// quantidade de perdas no estado Bad
 static int LostInBad = 100;
-// proporcao de troca de estado - no project conf
-//static int GoodToBad = 20;
-//static int BadToGood = 60;
 if (goodState) {
 
     // verificar se deve perder o pacote    
@@ -1029,11 +1076,8 @@ if (goodState) {
     } else {
         goodState = 1;
     }
-       // cout de debug
-    //cout << "GoodState" << (discardPkt?"D":".") << (goodState?"+":"-") << endl;
     PRINTF("Goodstate: discard=%d goodstate=%d\n",discardPkt,goodState );
 } else {
-
     // verificar se deve perder o pacote
     if ( (1+random_rand()%100) <= LostInBad ){
         discardPkt = 1;
@@ -1044,28 +1088,29 @@ if (goodState) {
     if ( (1+random_rand()%100) <= BadToGood ) {
         goodState = 1;
     } else {
-        goodState = 0;
-        
+        goodState = 0;   
     }
-       // cout de debug 
-    //cout << "BadState" << (discardPkt?"D":".") << (goodState?"+":"-") << endl;
     PRINTF("Badstate: discard=%d goodstate=%d\n",discardPkt,goodState );
 }
 // faz o descarte do pacote se necessario
   if (discardPkt) {
       //printf("Discarding packet from _node_id=%d\n",_node_id);
-      if (_node_id!=0){
+      if (_node_id != 0){
+        #if NETWORK_CODING
+        smart_coding=smart_coding+1;
+        #endif
         uip_len = 0;
-        uip_ext_len = 0;
-        uip_flags = 0;
+        //uip_ext_len = 0;
+        //uip_flags = 0;
         total_dropped+=1;
       }
       return 1;
   }
-  if(_node_id!=0)
-  {
+  if(_node_id!=0){
+
     total_forwarded++; /*messages from the node itself are not counted here*/
     print_mid(_node_id);
+
   }
   return 0;
 }

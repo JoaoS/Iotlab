@@ -42,15 +42,18 @@
 #include "contiki.h"
 #include "contiki-net.h"
 #include "rest-engine.h"
-#include "ncoding.h"
 #include "er-coap.h"
+
+#if GILBERT_ELLIOT_DISCARDER
+#include "ncoding.h"
+#endif
 
 #if PLATFORM_HAS_BUTTON
 #include "dev/button-sensor.h"
 #endif
 
 /**/
-
+int i=0;
 int dis_flag=0;
 static int time_f=0;
 
@@ -234,47 +237,52 @@ PROCESS_THREAD(er_example_server, ev, data)
       total_dropped=0;
       lostpackets=0;
       dis_flag=1;
+      printf("(%d second discard)\n",WARMUP_DISCARD);
+      #if GILBERT_ELLIOT_DISCARDER
       local_loss=0;
       sent_coded=0;
-      printf("(%d second discard)\n",WARMUP_DISCARD);
+
+      for (i = 0; i < ELEMENTS; ++i){
+        loss_array[i]=0;
+      }
+      #endif
     }
     
     /*prepare new message and send it to external IP address*/
+    #if GILBERT_ELLIOT_DISCARDER
     if (ev == coding_event){
       //send coded message, located in nconding file
       //printf("my event\n");
       send_coded(&res_coded);
     }
+    #endif
+
+
     if (etimer_expired(&stats))
     {
-      int i=0;
-      if (total_coap_sent>0)
-      {
-      printf("(%d minute)retrans=(%d), confirmed messages=(%d) sent coap messages(include retrans)=(%d) lostpackets(at producers)=(%d)\n"
+      if (total_coap_sent>0){
+        printf("(%d minute)retrans=(%d), confirmed messages=(%d) sent coap messages(include retrans)=(%d) lostpackets(at producers)=(%d)\n"
         ,WARMUP_DISCARD+300,count_retrans,count_ack,total_coap_sent,lostpackets);
       }
+
     #if GILBERT_ELLIOT_DISCARDER
       printf("total_forwarded=(%d), total_dropped=(%d) ",total_forwarded,total_dropped);
-    for (i = 0; i < ELEMENTS; ++i)
-    {
-      if (loss_array[i]!=0)
+      for (i = 0; i < ELEMENTS; ++i)
       {
-        printf("discarded at node %d=(%d) ",i,loss_array[i]);
-      }
-    }      
-    printf(" local discarded-coded=%d, sent coded=%d\n",local_loss,sent_coded);
+        if (loss_array[i]!=0){
+          printf("discarded at node %d=(%d) ",i,loss_array[i]);
+        }
+      }      
+      printf(" local discarded-coded=%d, sent coded=%d\n",local_loss,sent_coded);
     #endif     
       etimer_reset(&stats);
-
     }
 
 #if PLATFORM_HAS_BUTTON
     if(ev == sensors_event && data == &button_sensor) {
       PRINTF("*******BUTTON*******\n");
-
       /* Call the event_handler for this application-specific event. */
       res_event.trigger();
-
       /* Also call the separate response example handler. */
       res_separate.resume();
     }
