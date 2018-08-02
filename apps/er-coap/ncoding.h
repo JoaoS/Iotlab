@@ -20,7 +20,7 @@ typedef struct s_message{
 	struct s_message *next;   /* for LIST */
 	uip_ipaddr_t addr; /*ip address of observer, it will be the same for now, only one group in the network*/
 	uint16_t port;	//the port is what dinstinguishes the coap requests, it might be different but use just one
-	uint8_t data[3];	// 2 plus null terminator
+	uint8_t data[7];	// 2 plus null terminator(3) + 4 bytes when using aggregation mid+temperature
 	uint8_t data_len; // to be used in the mask xor process
 	uint16_t mid;
 	int32_t observe;

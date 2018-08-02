@@ -61,6 +61,8 @@
 #define DEBUG DEBUG_NONE
 #include "net/ip/uip-debug.h"
 
+int rank_level=0;
+
 /* A configurable function called after every RPL parent switch */
 #ifdef RPL_CALLBACK_PARENT_SWITCH
 void RPL_CALLBACK_PARENT_SWITCH(rpl_parent_t *old, rpl_parent_t *new);
@@ -1364,7 +1366,7 @@ rpl_process_parent_event(rpl_instance_t *instance, rpl_parent_t *p)
   int return_value;
   rpl_parent_t *last_parent = instance->current_dag->preferred_parent;
 
-#if DEBUG
+#if 1
   rpl_rank_t old_rank;
   old_rank = instance->current_dag->rank;
 #endif /* DEBUG */
@@ -1402,7 +1404,7 @@ rpl_process_parent_event(rpl_instance_t *instance, rpl_parent_t *p)
     }
   }
 
-#if DEBUG
+#if 1
   if(DAG_RANK(old_rank, instance) != DAG_RANK(instance->current_dag->rank, instance)) {
     PRINTF("RPL: Moving in the instance from rank %hu to %hu\n",
 	   DAG_RANK(old_rank, instance), DAG_RANK(instance->current_dag->rank, instance));
@@ -1411,6 +1413,8 @@ rpl_process_parent_event(rpl_instance_t *instance, rpl_parent_t *p)
       PRINT6ADDR(rpl_get_parent_ipaddr(instance->current_dag->preferred_parent));
       PRINTF(" (rank %u)\n",
            (unsigned)DAG_RANK(instance->current_dag->preferred_parent->rank, instance));
+      rank_level=DAG_RANK(instance->current_dag->preferred_parent->rank, instance);
+
     } else {
       PRINTF("RPL: We don't have any parent");
     }

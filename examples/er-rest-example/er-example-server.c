@@ -44,7 +44,7 @@
 #include "rest-engine.h"
 #include "er-coap.h"
 
-#if GILBERT_ELLIOT_DISCARDER
+#if NETWORK_CODING
 #include "ncoding.h"
 #endif
 
@@ -231,17 +231,15 @@ PROCESS_THREAD(er_example_server, ev, data)
       count_retrans=0;
       count_ack=0;
       total_coap_sent=0;
-      from_node3=0;
-      from_node4=0;
       total_forwarded=0;
       total_dropped=0;
       lostpackets=0;
       dis_flag=1;
       printf("(%d second discard)\n",WARMUP_DISCARD);
-      #if GILBERT_ELLIOT_DISCARDER
+      
+      #if GILBERT_ELLIOT_DISCARDER //zero the variables for the losses
       local_loss=0;
       sent_coded=0;
-
       for (i = 0; i < ELEMENTS; ++i){
         loss_array[i]=0;
       }
@@ -249,7 +247,7 @@ PROCESS_THREAD(er_example_server, ev, data)
     }
     
     /*prepare new message and send it to external IP address*/
-    #if GILBERT_ELLIOT_DISCARDER
+    #if NETWORK_CODING
     if (ev == coding_event){
       //send coded message, located in nconding file
       //printf("my event\n");
@@ -277,6 +275,8 @@ PROCESS_THREAD(er_example_server, ev, data)
     #endif     
       etimer_reset(&stats);
     }
+
+
 
 #if PLATFORM_HAS_BUTTON
     if(ev == sensors_event && data == &button_sensor) {

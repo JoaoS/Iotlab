@@ -98,12 +98,10 @@ print_ipv6_addr(const uip_ipaddr_t *ip_addr) {
 int id_node; /*for cooja id nodes*/
 int total_forwarded=0;
 int total_dropped=0;
-int from_node3=0;
-int from_node4=0;
 void print_mid();
-;
 int loss_array[ELEMENTS]={0};
 #endif
+
 /* code ends*/
 #if NETWORK_CODING   
 void store_msg(void);
@@ -242,12 +240,26 @@ packet_input(void)
 
 
   #if ( AGGREGATION ) && COOJA_EXP 
-    if (!uip_ds6_is_my_addr(&UIP_IP_BUF->srcipaddr)){
-      //printf("eueueueue\n");
-      store_msg();
-    }
-  #endif  
+    if (!uip_ds6_is_my_addr(&UIP_IP_BUF->srcipaddr) ){
+      if (dis_flag)
+      {
+        store_msg();
 
+        #if NETWORK_CODING
+          netpackets=get_coded_len();
+          //printf("netpackets=%d\n",netpackets );
+          if(netpackets == 3 && rank_level == 1)
+          {
+            trigger_message(1);
+            //trigger_message(smart_coding); AQUI PA AQUI TODO this is the original change to this to triger coded when only one is lost
+            smart_coding=0;
+          }
+        #endif
+      }
+  }
+      
+  #endif  
+#if 0
 
 #if HARDCODED_TOPOLOGY
   static uip_ipaddr_t node7,node8,node9,node10,node11,node12;
@@ -381,7 +393,7 @@ packet_input(void)
   //}
 #endif
 
-
+#endif
     if(uip_len > 0) {
 #if UIP_CONF_TCP_SPLIT
       uip_split_output();
@@ -1028,12 +1040,10 @@ PROCESS_THREAD(tcpip_process, ev, data)
 /*---------------------------------------------------------------------------*/
 
 #if NETWORK_CODING || AGGREGATION 
+
 /* extract coap payloads and keep them until its time, this message is when ncoding file decides*/
-void 
-store_msg(void){
-  //static target_etag=""
-  /* This is a definition put in Contiki/platform/wismote/platform-conf.c. Sky motes do not have enough memory to implement Aggregation. */
-  //is my packet uip_ds6_is_my_addr(&UIP_IP_BUF->srcipaddr)
+void store_msg(void){
+
   static coap_packet_t coap_pt[1];    //allocate space for 1 packet, treat as pointer
   static unsigned int begin_payload_index=UIP_IPUDPH_LEN+8;  // the forwarded packet has 8 more bytes(extension headers=uip_ext_len)
   /*IMPORTANT, because of max packet size in REST_MAX_CHUNK_SIZE tha max size of parsed packet is that value*/
@@ -1044,16 +1054,21 @@ store_msg(void){
     if(IS_OPTION(coap_pt, COAP_OPTION_ETAG)) {
       //printf("storing message, etag= %u\n",coap_pt->etag);
       /*check correct etag from coded resource, is 10*/
-      if (((int)coap_pt->etag[0]==10))//etag will sufice, the ports change so do not use that, also they apear on the network order(reverse)
+      if (((int)coap_pt->etag[0]>=0))//etag will sufice, the ports change so do not use that, also they apear on the network order(reverse)
       {
         add_payload(coap_pt->payload, coap_pt->mid, (uint8_t)coap_pt->payload_len, &UIP_IP_BUF->destipaddr,UIP_UDP_BUF->destport, coap_pt);
       }
     }
-      /* Drop all not self-produced packets., NOT IN THIS CASE WITH CODING
+      /* Drop all not self-produced packets., NOT IN THIS CASE WITH CODING*/
+    PRINTF("my rank level(in tcpip) is %d\n",rank_level );
+    if (rank_level > 1 && dis_flag)//descarta se nao for o no de coding, sera entao um no de agregacao.
+    {
       uip_len = 0;
       uip_ext_len = 0;
       uip_flags = 0;
-      return;*/
+      return;
+    }
+      
     } 
 }
 #endif

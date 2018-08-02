@@ -24,22 +24,19 @@ int local_loss=0;  //for the lost coded messages
 int sent_coded=0;
 static int totalcounter=1;
 int losses=0;
-s_message_t * get_last_message(void);
-/**/
+s_message_t * get_message_pop(void);
+
+/*add this data to the list of packets to process*/
 void add_payload(uint8_t *incomingPayload, uint16_t mid, uint8_t len, uip_ipaddr_t * destaddr, uint16_t dport, coap_packet_t * coap_pt ){
 	
 	s_message_t * message = memb_alloc(&coded_memb);
-	printf("Adding message=%d\n",totalcounter);
 	totalcounter++;
-	//printf("coap token len=%u, token=%02x%02x%02x%02x \n",coap_pt->token_len,coap_pt->token[0],coap_pt->token[1],coap_pt->token[2],coap_pt->token[3]);
-	//printf("observe=%ld\n",coap_pt->observe );
 	if (message)
 	{
 		memcpy(message->data,incomingPayload,len);
 		message->data[len] = '\0';
 		message->mid = mid;
 		message->data_len=len;
-		printf("datalen=%u\n",len );
 		uip_ipaddr_copy(&message->addr, destaddr);
 		message->port = dport;
 		/*token, token_len, code*/
@@ -52,20 +49,18 @@ void add_payload(uint8_t *incomingPayload, uint16_t mid, uint8_t len, uip_ipaddr
 	else
 		printf("ERROR ALOCATING MEMORY FOR PACKET\n");
 
-//printf("len lista=%d\n",list_length(coded_list) );
-	/*if(list_length(coded_list) % TRIGGERPACKETS == 0){//signal for coded message
-		process_post(PROCESS_BROADCAST,coding_event, NULL);
-	}
-*/
 }
+
 /*auxilary functions for aggregation*/
-s_message_t * get_last_message(void){
-	return list_head(coded_list);
+s_message_t * get_message_pop(void){
+	return list_pop(coded_list);
+
 }
 
 int get_coded_len(void){
 	return list_length(coded_list);
 }
+
 void trigger_message(int num){
 	if(list_length(coded_list) == 3){//signal for coded message
 		losses=num;
@@ -98,10 +93,10 @@ void send_coded(resource_t *resource){
   	for (mlist = (s_message_t *)list_head(coded_list); mlist ;mlist=mlist->next){
   		messages_num++;
   	}*/
-
-
 	//ALSO DISCARD MESSAGES THAT ARE CODED
+	#if GILBERT_ELLIOT_DISCARDER
 	will_discard=discard_engine(0); /*return 1 if the packet is to be discarded*/
+	#endif
 	if (will_discard==1 && losses == 1){
 		local_loss=local_loss+1;
 		//printf("LOCAL LOSS SENDING FUNCTION =%d\n",local_loss );
@@ -146,10 +141,7 @@ void send_coded(resource_t *resource){
 	      }
 	      */
 	    }
-
 	}
-    //clean buffer
-    //printf("cleaning data\n");
 	free_two_data();
  	PRINTF("free=%d\n",memb_numfree(&coded_memb));
 }
@@ -159,64 +151,89 @@ void create_xor(void *response, uint8_t *buffer, uint16_t preferred_size){
 	static int packetnumber;	/*count payloads to signal it in the etag*/
 	static int mid_pointer; // to save pointer to buffer to copy mid
 	static s_message_t * destination=NULL;
-	uint8_t xored_data[2];
+	uint16_t xoring_buffer[2];
 	uint8_t rmid=0;
 	packetnumber=mid_pointer=0;
-	memset(xored_data, 0, sizeof(xored_data));
+	memset(xoring_buffer, 0, sizeof(xoring_buffer));
 	int i=0;
+	static uint16_t temp=0; //for temporary payloads due to array
+	
+
+	static int len=0;
+	static int extra_packet_len=0; /*we are goint to put the number of extra bytes in the etag, only one payload is suposed to be aggregated, */
+	static s_message_t * buff_packet=NULL;
+
+	len=get_coded_len();
+	extra_packet_len=0;
+    for ( i = 0; i < 2; ++i){
+
+        buff_packet = (s_message_t *) get_message_pop(); //pop and return all messages
+        extra_packet_len = 2 + extra_packet_len + buff_packet->data_len; //the mid space + the len in bytes of temperature
+        
+        rmid =(buff_packet->mid & 0xFF00 ) >>8;
+        //snprintf uses number of characters so each number is 1 byte; do not use, because human readable uses extra space
+        memcpy(buffer+(mid_pointer*sizeof(uint8_t)), &rmid  ,  sizeof(uint8_t));/*apend every mid*/
+        mid_pointer++;
+        rmid = buff_packet->mid & 0x00FF;
+        memcpy(buffer+(mid_pointer*sizeof(uint8_t)), &rmid  ,  sizeof(uint8_t));/*apend every mid*/
+        mid_pointer++;
+
+        /***************************ALSO NECESSARY TO COPY THE AGGREGATED MIDS AND PAYLOADS**********************/
+        /*AGGREGATED MIDS*/
+        memcpy(buffer+(mid_pointer*sizeof(uint8_t)), &(buff_packet->data[2]),sizeof(uint8_t));/*apend every mid*/
+        mid_pointer++;
+        memcpy(buffer+(mid_pointer*sizeof(uint8_t)), &(buff_packet->data[3]),sizeof(uint8_t));/*apend every mid*/
+        mid_pointer++;
+
+        /*Now xor all payloads, these will be added at the end*/
+		temp=((uint16_t) buff_packet->data[0] << 8) | buff_packet->data[1];
+        xoring_buffer[0] ^= temp;
+        //printf("temp=%04x    xoring buffer=%04x\n",temp, xoring_buffer );
+        temp=((uint16_t) buff_packet->data[4] << 8) | buff_packet->data[5];
+
+        xoring_buffer[1]^= temp;
+        //printf("temp=%04x    xoring buffer=%04x\n",temp, xoring_buffer );
+              //printf("xoring buffer=%04x\n",xoring_buffer );
+        free_poped_memb(buff_packet);//free the alocated memory
+      }
+      if(i==0)   //NO MESSAGES
+      {
+        i=1;
+      }
+      rmid = (xoring_buffer[0] & 0xFF00 ) >>8;
+      memcpy(buffer+(mid_pointer*sizeof(uint8_t)), &rmid ,sizeof(uint8_t));/*apend every mid*/
+      mid_pointer++;
+      rmid = xoring_buffer[0] & 0x00FF;
+      memcpy(buffer+(mid_pointer*sizeof(uint8_t)), &rmid ,sizeof(uint8_t));/*apend every mid*/
+      mid_pointer++;
+      rmid = (xoring_buffer[1] & 0xFF00 ) >>8;
+      memcpy(buffer+(mid_pointer*sizeof(uint8_t)), &rmid ,sizeof(uint8_t));/*apend every mid*/
+      mid_pointer++;
+      rmid = xoring_buffer[1] & 0x00FF;
+      memcpy(buffer+(mid_pointer*sizeof(uint8_t)), &rmid ,sizeof(uint8_t));/*apend every mid*/
+      mid_pointer++;
 
 
-		//first mid then all payloads xored
-	for(destination = (s_message_t *)list_head(coded_list); destination; destination = destination->next) {
+      printf("extra_packet_len=%d\n",extra_packet_len );
+      printf("final=xoring buffer=%04x\n",xoring_buffer );
 
-		if (i==TRIGGERPACKETS)
-		{
-			break;
-		}
-		/*i use this method instead of memcpy uint16_t to prevent the change in byte order due to endianess of cpu*/
-		rmid	=(destination->mid & 0xFF00 ) >>8;
-		//snprintf uses number of characters so each number is 1 byte; do not use, because human readable uses extra space
-		memcpy(buffer+(mid_pointer*sizeof(uint8_t)), &rmid  ,  sizeof(uint8_t));/*apend every mid*/
-		mid_pointer++;
-		rmid = destination->mid & 0x00FF;
-		memcpy(buffer+(mid_pointer*sizeof(uint8_t)), &rmid  ,  sizeof(uint8_t));/*apend every mid*/
-		mid_pointer++;
-		packetnumber++;	
 
-		if (destination->data_len == 1)//only 1 number is stored in the first array position
-		{
-			xored_data[0] ^= destination->data[0];  //xor 1 st byte
-			xored_data[1] ^= 0;
-		}
-		else if(destination->data_len == 2){
-			xored_data[0] ^= destination->data[0];  //xor 1 st byte
-			xored_data[1] ^= destination->data[1];
-		}
-		i++;
 
-	}
+      REST.set_header_etag(response, (uint8_t *)&mid_pointer, 1);
+      REST.set_response_payload(response, buffer,  mid_pointer*sizeof(uint8_t));
 
-	//xor payload
-	memcpy(buffer+(mid_pointer*sizeof(uint8_t)), &xored_data[0]  ,  sizeof(uint8_t));
-	mid_pointer++;
-	memcpy(buffer+(mid_pointer*sizeof(uint8_t)), &xored_data[1]  ,  sizeof(uint8_t));
-	mid_pointer++;	//update the len of  buffer to send correct size message
-	REST.set_header_etag(response, (uint8_t *)&packetnumber, 1); /*indicate number of packets that have been coded*/
-	REST.set_response_payload(response, buffer, (mid_pointer)*sizeof(uint8_t));
 }
 
 void free_data(void){
 	s_message_t * mlist=NULL;  
-	PRINTF("clearing coded \n");
  	for(mlist = (s_message_t *)list_head(coded_list); mlist ;mlist=mlist->next) {
     remove_element(mlist);
   }
-  /*coap_transaction_t *t = NULL;
- 
-  for(t = (coap_transaction_t *)list_head(transactions_list); t; t = t->next) {
-    printf("atempting remove transaction %u: %p\n", t->mid, t);
-    remove_trans_element(t);
-  }*/
+}
+
+//message was poped, free memory
+void free_poped_memb(s_message_t * o){
+	memb_free(&coded_memb, o);
 }
 
 void remove_element(s_message_t * o){
@@ -227,6 +244,10 @@ void remove_element(s_message_t * o){
   //list_remove(coded_list,o); /*has to be pop so cycle does not loop*/  
 }
 
+
+/**
+*free data just from two messages, for the coding process
+*/
 void free_two_data(void){
   s_message_t * mlist=NULL; 
   int i=0; 
@@ -240,5 +261,4 @@ void free_two_data(void){
     remove_element(mlist);
     i++;
   }
-
 }

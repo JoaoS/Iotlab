@@ -56,21 +56,25 @@ extern  int lostpackets;
 extern  int loss_array[ELEMENTS];
 
 /*fag forlafgts reset and discarder, if its one discarding begins */
-extern  int dis_flag;
+extern int dis_flag;
+extern int rank_level; /*this flag is used to know if aggregate or code message,
+to avoid multiple firmwares, a node checks its rank in the tree and agregates or codes*/
 
 
-#define SEND_MESSAGE_INTERVAL 1    /*interval to send coded resource messages*/
+#define SEND_MESSAGE_INTERVAL 7     /*interval to send coded resource messages*/
 #define WARMUP_DISCARD 190          /*DISCARD FIRST X SECONDS OF STATISTICS*/
-#define MAX_CODED_PAYLOADS 30        /* space in number of packets in the buffer to code*/
-#define TRIGGERPACKETS 2        /*number of packets that trigger a coded message*/
-#define OBS_REFRESH_INTERVAL 1      /*interval of ack in messages, 1 to allways confirmable*/
+#define MAX_CODED_PAYLOADS 30       /* space in number of packets in the buffer to code*/
+#define TRIGGERPACKETS 2            /*number of packets that trigger a coded message*/
+#define OBS_REFRESH_INTERVAL 300     /*interval of ack in messages, 1 to allways confirmable*/
 #define MAX_RETRANS 4               /*max number of retransmissions of a single message*/
-#define COM_ACKS 1 /*TO ADD HEADER AND FUNCTION DECLARATIONS IN TCPIP*/
+#define COM_ACKS 1                  /*TO ADD HEADER AND FUNCTION DECLARATIONS IN TCPIP*/
+
 /*gilber elliot transition probabilities from 0 to 100*/
 #define GoodToBad 11
 #define BadToGood 45
+
 /*logic, use discarded and coding + iotlab for iotlab, when testing in cooja change flags cooja exp */
-#define NETWORK_CODING 0            /*activates packet capturing and network coding mechanism */
+#define NETWORK_CODING 1            /*activates packet capturing and network coding mechanism */
 #define COOJA_EXP 1     /*use this to apply configurations for development in cooja*/
 #define IOTLAB 0        /*reduces power and other stuff for testing in iotlab*/
 #define HARDCODED_TOPOLOGY 0  /*static routing*/
@@ -80,7 +84,7 @@ extern  int dis_flag;
 
 #if GILBERT_ELLIOT_DISCARDER
 extern  int local_loss; /*the coded messages can also be lost, count the lost coded messages*/
-extern  int sent_coded;
+extern  int sent_coded; 
 #endif
 #if IOTLAB
 //#define RPL_UPDATE_INTERVAL 600 //testing in net/rpl/conf
@@ -92,7 +96,6 @@ extern  int sent_coded;
 #define NODE_4_IP 0x2353
 #define NODE_5_IP 0xc374
 #define NODE_6_IP 0x2760
-
 //reverse node order because  c374 malfunction
 #define NODE_7_IP 0x2453
 #define NODE_8_IP 0x2061
