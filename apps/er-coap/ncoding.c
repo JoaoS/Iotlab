@@ -24,12 +24,12 @@ int local_loss=0;  //for the lost coded messages
 int sent_coded=0;
 static int totalcounter=1;
 int losses=0;
-
+s_message_t * get_last_message(void);
 /**/
 void add_payload(uint8_t *incomingPayload, uint16_t mid, uint8_t len, uip_ipaddr_t * destaddr, uint16_t dport, coap_packet_t * coap_pt ){
 	
 	s_message_t * message = memb_alloc(&coded_memb);
-	PRINTF("Adding message=%d\n",totalcounter);
+	printf("Adding message=%d\n",totalcounter);
 	totalcounter++;
 	//printf("coap token len=%u, token=%02x%02x%02x%02x \n",coap_pt->token_len,coap_pt->token[0],coap_pt->token[1],coap_pt->token[2],coap_pt->token[3]);
 	//printf("observe=%ld\n",coap_pt->observe );
@@ -39,6 +39,7 @@ void add_payload(uint8_t *incomingPayload, uint16_t mid, uint8_t len, uip_ipaddr
 		message->data[len] = '\0';
 		message->mid = mid;
 		message->data_len=len;
+		printf("datalen=%u\n",len );
 		uip_ipaddr_copy(&message->addr, destaddr);
 		message->port = dport;
 		/*token, token_len, code*/
@@ -54,8 +55,14 @@ void add_payload(uint8_t *incomingPayload, uint16_t mid, uint8_t len, uip_ipaddr
 //printf("len lista=%d\n",list_length(coded_list) );
 	/*if(list_length(coded_list) % TRIGGERPACKETS == 0){//signal for coded message
 		process_post(PROCESS_BROADCAST,coding_event, NULL);
-	}*/
+	}
+*/
 }
+/*auxilary functions for aggregation*/
+s_message_t * get_last_message(void){
+	return list_head(coded_list);
+}
+
 int get_coded_len(void){
 	return list_length(coded_list);
 }

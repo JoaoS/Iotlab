@@ -239,6 +239,16 @@ packet_input(void)
 
     check_for_tcp_syn();
     uip_input();
+
+
+  #if ( AGGREGATION ) && COOJA_EXP 
+    if (!uip_ds6_is_my_addr(&UIP_IP_BUF->srcipaddr)){
+      //printf("eueueueue\n");
+      store_msg();
+    }
+  #endif  
+
+
 #if HARDCODED_TOPOLOGY
   static uip_ipaddr_t node7,node8,node9,node10,node11,node12;
   static uip_ipaddr_t node1,node2,node3,node4,node5,node6;
@@ -257,15 +267,11 @@ packet_input(void)
   uip_ip6addr(&node12, 0x2001, 0x0660, 0x3207, 0x04c0, 0, 0, 0 , NODE_12_IP);
   
   #if COOJA_EXP //for cooja nodes
-  static uip_ipaddr_t node4,node4;
+  static uip_ipaddr_t node3,node4;
   uip_ip6addr(&node3, 0xfd00, 0, 0, 0, 200, 0, 0 , 0x0003);
   uip_ip6addr(&node4, 0xfd00, 0, 0, 0, 200, 0, 0 , 0x0004);
   #endif
-  #if NETWORK_CODING && COOJA_EXP
-  if ((uip_ip6addr_cmp(&node3,&UIP_IP_BUF->srcipaddr) || (uip_ip6addr_cmp(&node4,&UIP_IP_BUF->srcipaddr)){
-    store_msg();
-  }
-  #endif  
+
 
   /*if (!dis_flag) //debug prints
   {
@@ -1021,7 +1027,7 @@ PROCESS_THREAD(tcpip_process, ev, data)
 }
 /*---------------------------------------------------------------------------*/
 
-#if NETWORK_CODING 
+#if NETWORK_CODING || AGGREGATION 
 /* extract coap payloads and keep them until its time, this message is when ncoding file decides*/
 void 
 store_msg(void){
@@ -1057,62 +1063,62 @@ store_msg(void){
 *Returns 1 if discarded packet
 */
 int discard_engine(int _node_id){
-static int discardPkt = 0;
-static int goodState = 1;
-static int LostInGood = 0;
-static int LostInBad = 100;
-if (goodState) {
+  static int discardPkt = 0;
+  static int goodState = 1;
+  static int LostInGood = 0;
+  static int LostInBad = 100;
+  if (goodState) {
 
-    // verificar se deve perder o pacote    
-    if ( (1+random_rand()%100) <= LostInGood ){
-        discardPkt = 1;
-    }else {
-        discardPkt = 0;
-    }
-    // verifica se deve mudar de estado
-    if ( (1+random_rand()%100) <= GoodToBad ) {
-        goodState = 0;
-        
-    } else {
-        goodState = 1;
-    }
-    PRINTF("Goodstate: discard=%d goodstate=%d\n",discardPkt,goodState );
-} else {
-    // verificar se deve perder o pacote
-    if ( (1+random_rand()%100) <= LostInBad ){
-        discardPkt = 1;
-    }else {
-        discardPkt = 0;
-    }
-    // verifica se deve mudar de estado
-    if ( (1+random_rand()%100) <= BadToGood ) {
-        goodState = 1;
-    } else {
-        goodState = 0;   
-    }
-    PRINTF("Badstate: discard=%d goodstate=%d\n",discardPkt,goodState );
-}
-// faz o descarte do pacote se necessario
-  if (discardPkt) {
-      //printf("Discarding packet from _node_id=%d\n",_node_id);
-      if (_node_id != 0){
-        #if NETWORK_CODING
-        smart_coding=smart_coding+1;
-        #endif
-        uip_len = 0;
-        //uip_ext_len = 0;
-        //uip_flags = 0;
-        total_dropped+=1;
+      // verificar se deve perder o pacote    
+      if ( (1+random_rand()%100) <= LostInGood ){
+          discardPkt = 1;
+      }else {
+          discardPkt = 0;
       }
-      return 1;
+      // verifica se deve mudar de estado
+      if ( (1+random_rand()%100) <= GoodToBad ) {
+          goodState = 0;
+          
+      } else {
+          goodState = 1;
+      }
+      PRINTF("Goodstate: discard=%d goodstate=%d\n",discardPkt,goodState );
+  } else {
+      // verificar se deve perder o pacote
+      if ( (1+random_rand()%100) <= LostInBad ){
+          discardPkt = 1;
+      }else {
+          discardPkt = 0;
+      }
+      // verifica se deve mudar de estado
+      if ( (1+random_rand()%100) <= BadToGood ) {
+          goodState = 1;
+      } else {
+          goodState = 0;   
+      }
+      PRINTF("Badstate: discard=%d goodstate=%d\n",discardPkt,goodState );
   }
-  if(_node_id!=0){
+  // faz o descarte do pacote se necessario
+    if (discardPkt) {
+        //printf("Discarding packet from _node_id=%d\n",_node_id);
+        if (_node_id != 0){
+          #if NETWORK_CODING
+          smart_coding=smart_coding+1;
+          #endif
+          uip_len = 0;
+          //uip_ext_len = 0;
+          //uip_flags = 0;
+          total_dropped+=1;
+        }
+        return 1;
+    }
+    if(_node_id!=0){
 
-    total_forwarded++; /*messages from the node itself are not counted here*/
-    print_mid(_node_id);
+      total_forwarded++; /*messages from the node itself are not counted here*/
+      print_mid(_node_id);
 
-  }
-  return 0;
+    }
+    return 0;
 }
 
 void print_mid(int id){

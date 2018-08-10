@@ -71,9 +71,10 @@ extern  int dis_flag;
 #define BadToGood 45
 /*logic, use discarded and coding + iotlab for iotlab, when testing in cooja change flags cooja exp */
 #define NETWORK_CODING 0            /*activates packet capturing and network coding mechanism */
-#define COOJA_EXP 0     /*use this to apply configurations for development in cooja*/
-#define IOTLAB 1        /*reduces power and other stuff for testing in iotlab*/
-#define HARDCODED_TOPOLOGY 1 /*static routing*/
+#define COOJA_EXP 1     /*use this to apply configurations for development in cooja*/
+#define IOTLAB 0        /*reduces power and other stuff for testing in iotlab*/
+#define HARDCODED_TOPOLOGY 0  /*static routing*/
+#define AGGREGATION 1
 #define GILBERT_ELLIOT_DISCARDER 0    /*this macro sends packets to loss model*/
 //#define REQUEST_NODE(ipaddr)   uip_ip6addr(ipaddr, 0x2001, 0x0660, 0x5307, 0x3111, 0, 0, 0 , 0x0001) 
 

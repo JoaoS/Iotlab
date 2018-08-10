@@ -18,13 +18,11 @@
 /*TODO: in the future url might be added and create a struct element list for each resource instead of simple struct list*/
 typedef struct s_message{
 	struct s_message *next;   /* for LIST */
-	
 	uip_ipaddr_t addr; /*ip address of observer, it will be the same for now, only one group in the network*/
 	uint16_t port;	//the port is what dinstinguishes the coap requests, it might be different but use just one
 	uint8_t data[3];	// 2 plus null terminator
 	uint8_t data_len; // to be used in the mask xor process
 	uint16_t mid;
-	
 	int32_t observe;
   	uint8_t token_len;
   	uint8_t token[COAP_TOKEN_LEN];
