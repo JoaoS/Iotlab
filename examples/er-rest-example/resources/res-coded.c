@@ -92,7 +92,7 @@ static void res_get_handler(void *request, void *response, uint8_t *buffer, uint
         len=len+1;
         REST.set_header_etag(response, (uint8_t *)&len, 1);
         REST.set_response_payload(response, buffer,  mid_pointer*sizeof(uint8_t));
-            printf("temperature=%d\n",temperature );
+           // printf("temperature=%d\n",temperature );
 
     }
     #endif     
@@ -100,7 +100,7 @@ static void res_get_handler(void *request, void *response, uint8_t *buffer, uint
    #if !AGGREGATION
     REST.set_header_etag(response, (uint8_t *)&seed, 1);/*this signals the message has been coded*/
     REST.set_response_payload(response, buffer, snprintf((char *)buffer, preferred_size, "%u", temperature));
-    printf("temperature=%d\n",temperature );
+    //printf("temperature=%d\n",temperature );
   #endif
   //printf("tamanho lista =%d\n",get_coded_len() );
       
