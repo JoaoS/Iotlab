@@ -86,12 +86,10 @@ extern struct uip_fallback_interface UIP_FALLBACK_INTERFACE;
 #include <stdlib.h>
 #include "random.h"
 #define REQUEST_NODE(ipaddr)   uip_ip6addr(ipaddr, 0xfd00, 0, 0, 0, 0, 0, 0 , 0x0001)      /* cooja2 */
-//#define REQUEST_NODE(ipaddr)   uip_ip6addr(ipaddr, 0x2001, 0x0660, 0x5307, 0x3111, 0, 0, 0 , 0x0001) 
 static uip_ipaddr_t server_ipaddr;
-static void
-print_ipv6_addr(const uip_ipaddr_t *ip_addr) {
+static void print_ipv6_addr(const uip_ipaddr_t *ip_addr) {
     int i;
-    for (i = 14; i < 16; i++) {
+    for (i = 0; i < 16; i++) {
         printf("%02x", ip_addr->u8[i]);
     }
 }
@@ -239,26 +237,70 @@ packet_input(void)
     uip_input();
 
 
-  #if ( AGGREGATION ) && COOJA_EXP 
-    if (!uip_ds6_is_my_addr(&UIP_IP_BUF->srcipaddr) ){
-      if (dis_flag)
-      {
-        store_msg();
+  
 
-        #if NETWORK_CODING
-          netpackets=get_coded_len();
-          //printf("netpackets=%d\n",netpackets );
-          if(netpackets == 3 && rank_level == 1)
-          {
-            trigger_message(1);
-            //trigger_message(smart_coding); AQUI PA AQUI TODO this is the original change to this to triger coded when only one is lost
-            smart_coding=0;
-          }
-        #endif
+  #if COOJA_EXP
+    static uip_ipaddr_t node3,node4,node5,node6;
+    uip_ip6addr(&node3, 0xfd00, 0, 0, 0, 0x0200, 0, 0 , 0x0003);
+    uip_ip6addr(&node4, 0xfd00, 0, 0, 0, 0x0200, 0, 0 , 0x0004);
+    uip_ip6addr(&node5, 0xfd00, 0, 0, 0, 0x0200, 0, 0 , 0x0005);
+    uip_ip6addr(&node6, 0xfd00, 0, 0, 0, 0x0200, 0, 0 , 0x0006);
+    
+    #if  (AGGREGATION || NETWORK_CODING)
+      if (!uip_ds6_is_my_addr(&UIP_IP_BUF->srcipaddr)){
+        if (dis_flag)
+        {
+          #if AGGREGATION
+            if (rank_level > 1)
+            {
+              store_msg();
+            }
+          #endif
+          
+          #if NETWORK_CODING
+            store_msg();
+            netpackets=get_coded_len();
+            //printf("netpackets=%d\n",netpackets );
+            if(netpackets == 3 && rank_level == 1){
+              trigger_message(smart_coding); 
+              smart_coding=0;
+            }
+          #endif
+        }
       }
-  }
-      
-  #endif  
+    #endif
+    if (dis_flag)
+    {
+      #if GILBERT_ELLIOT_DISCARDER /*here print the retransmission and drop if conditions are met*/
+        if(rank_level == 1)
+        {
+            if( (uip_ip6addr_cmp(&node3,&UIP_IP_BUF->srcipaddr)) && !uip_ds6_is_my_addr(&UIP_IP_BUF->srcipaddr)){
+                  if(discard_engine(3)){
+                    loss_array[3]=loss_array[3]+1;
+                }
+              }
+            if( (uip_ip6addr_cmp(&node4,&UIP_IP_BUF->srcipaddr)) && !uip_ds6_is_my_addr(&UIP_IP_BUF->srcipaddr)){
+                  if(discard_engine(4)){
+                    loss_array[4]=loss_array[4]+1;
+                }
+              } 
+            if( (uip_ip6addr_cmp(&node5,&UIP_IP_BUF->srcipaddr)) && !uip_ds6_is_my_addr(&UIP_IP_BUF->srcipaddr)){
+                  if(discard_engine(5)){
+                    loss_array[5]=loss_array[5]+1;
+                }
+              }
+            if( (uip_ip6addr_cmp(&node6,&UIP_IP_BUF->srcipaddr)) && !uip_ds6_is_my_addr(&UIP_IP_BUF->srcipaddr)){
+                  if(discard_engine(6)){
+                    loss_array[6]=loss_array[6]+1;
+                }
+              }
+        }
+      #endif
+    }
+  #endif 
+
+
+
 #if 0
 
 #if HARDCODED_TOPOLOGY
@@ -270,34 +312,16 @@ packet_input(void)
   uip_ip6addr(&node4, 0x2001, 0x0660, 0x3207, 0x04c0, 0, 0, 0 , NODE_4_IP);
   uip_ip6addr(&node5, 0x2001, 0x0660, 0x3207, 0x04c0, 0, 0, 0 , NODE_5_IP);
   uip_ip6addr(&node6, 0x2001, 0x0660, 0x3207, 0x04c0, 0, 0, 0 , NODE_6_IP);
-  //
   uip_ip6addr(&node7, 0x2001, 0x0660, 0x3207, 0x04c0, 0, 0, 0 , NODE_7_IP);
   uip_ip6addr(&node8, 0x2001, 0x0660, 0x3207, 0x04c0, 0, 0, 0 , NODE_8_IP);
   uip_ip6addr(&node9, 0x2001, 0x0660, 0x3207, 0x04c0, 0, 0, 0 , NODE_9_IP);
   uip_ip6addr(&node10, 0x2001, 0x0660, 0x3207, 0x04c0, 0, 0, 0 , NODE_10_IP);
   uip_ip6addr(&node11, 0x2001, 0x0660, 0x3207, 0x04c0, 0, 0, 0 , NODE_11_IP);
   uip_ip6addr(&node12, 0x2001, 0x0660, 0x3207, 0x04c0, 0, 0, 0 , NODE_12_IP);
-  
-  #if COOJA_EXP //for cooja nodes
-  static uip_ipaddr_t node3,node4;
-  uip_ip6addr(&node3, 0xfd00, 0, 0, 0, 200, 0, 0 , 0x0003);
-  uip_ip6addr(&node4, 0xfd00, 0, 0, 0, 200, 0, 0 , 0x0004);
-  #endif
 
 
-  /*if (!dis_flag) //debug prints
-  {
-    
-    if( (uip_ip6addr_cmp(&node3,&UIP_IP_BUF->srcipaddr) ) && !uip_ds6_is_my_addr(&UIP_IP_BUF->srcipaddr)){
-      printf("forwarding message\n");
-      print_mid(3);
-    } 
-    if( (uip_ip6addr_cmp(&node4,&UIP_IP_BUF->srcipaddr)) && !uip_ds6_is_my_addr(&UIP_IP_BUF->srcipaddr)){
-      printf("forwarding message\n");
-      print_mid(4);
-    } 
-  }*/
-  #if NETWORK_CODING && !COOJA_EXP
+
+  #if NETWORK_CODING && IOTLAB
         //save message if destination is the external observer given in er-example, if the server ip is fd00::::1 it activates the web browser requests
     if((uip_ip6addr_cmp(&node1,&UIP_IP_BUF->srcipaddr) || uip_ip6addr_cmp(&node2,&UIP_IP_BUF->srcipaddr) ||
       uip_ip6addr_cmp(&node3,&UIP_IP_BUF->srcipaddr) || uip_ip6addr_cmp(&node4,&UIP_IP_BUF->srcipaddr) ||
@@ -313,14 +337,9 @@ packet_input(void)
       //printf("netpackets=%d\n",netpackets );
       if(netpackets == 3)
       {
-
         trigger_message(smart_coding);
         smart_coding=0;
-      }/*else if (netpackets==3 && temp!=2 ){
-        netpackets=1;
-        smart_coding[0]=0;
-        free_two_data();
-      }*/
+      }
     }
 #endif
  // if (dis_flag) // set in er-rest-example
@@ -1060,23 +1079,24 @@ void store_msg(void){
       }
     }
       /* Drop all not self-produced packets., NOT IN THIS CASE WITH CODING*/
-    PRINTF("my rank level(in tcpip) is %d\n",rank_level );
-    if (rank_level > 1 && dis_flag)//descarta se nao for o no de coding, sera entao um no de agregacao.
-    {
-      uip_len = 0;
-      uip_ext_len = 0;
-      uip_flags = 0;
-      return;
-    }
+
+    #if GILBERT_ELLIOT_DISCARDER
+      PRINTF("my rank level(in tcpip) is %d\n",rank_level );
+      if (rank_level > 1 && dis_flag)//descarta se nao for o no de coding, sera entao um no de agregacao.
+      {
+        uip_len = 0;
+        uip_ext_len = 0;
+        uip_flags = 0;
+        return;
+      }
+    #endif
       
     } 
 }
 #endif
 
 #if GILBERT_ELLIOT_DISCARDER
-/*
-*Returns 1 if discarded packet
-*/
+/*Returns 1 if the packet was discarded */
 int discard_engine(int _node_id){
   static int discardPkt = 0;
   static int goodState = 1;
@@ -1115,23 +1135,19 @@ int discard_engine(int _node_id){
   }
   // faz o descarte do pacote se necessario
     if (discardPkt) {
-        //printf("Discarding packet from _node_id=%d\n",_node_id);
+      /*node, nodeid=0 means the coder node is the one*/
         if (_node_id != 0){
           #if NETWORK_CODING
-          smart_coding=smart_coding+1;
+            smart_coding=smart_coding+1;
           #endif
           uip_len = 0;
-          //uip_ext_len = 0;
-          //uip_flags = 0;
           total_dropped+=1;
         }
         return 1;
     }
-    if(_node_id!=0){
-
+    if(_node_id != 0){
       total_forwarded++; /*messages from the node itself are not counted here*/
       print_mid(_node_id);
-
     }
     return 0;
 }

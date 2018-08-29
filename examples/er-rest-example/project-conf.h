@@ -39,53 +39,47 @@
 #ifndef __PROJECT_ERBIUM_CONF_H__
 #define __PROJECT_ERBIUM_CONF_H__
 
-/*densenet: network coding mechanism*/
-/*add files for packet capturing and network coding functions*/
+
 /*variables to gather experiments data*/
-extern  int count_retrans;
-extern  int count_ack;
-extern  int total_coap_sent; /*number of coap messages sent including retransmissions*/
+extern  int count_retrans;    /* the number of packet retransmissions*/
+extern  int count_ack;        /*the number of acks received*/
+extern  int total_coap_sent;  /*total number of coap messages sent including retransmissions*/
+
 /*variables for the gilbert elliot discard statistics*/
-extern  int total_forwarded;
-extern  int total_dropped;
-extern  int from_node3;
-extern  int from_node4;
-extern  int lostpackets;
-
+extern  int total_forwarded;  /*number of messages forwarded*/
+extern  int total_dropped;    /*number of messages dropped at the discarder*/
 #define ELEMENTS 13
-extern  int loss_array[ELEMENTS];
+extern  int loss_array[ELEMENTS]; /*every element contains the loss on one node*/
+/*end gilbert elliot variables*/
 
-/*fag forlafgts reset and discarder, if its one discarding begins */
-extern int dis_flag;
+extern int dis_flag;    /*if WARMUP_DISCARD time has passed this flag is set to one*/
 extern int rank_level; /*this flag is used to know if aggregate or code message,
 to avoid multiple firmwares, a node checks its rank in the tree and agregates or codes*/
 
 
-#define SEND_MESSAGE_INTERVAL 7     /*interval to send coded resource messages*/
+#define SEND_MESSAGE_INTERVAL 5     /*time interval in seconds to send coded resource message*/
 #define WARMUP_DISCARD 190          /*DISCARD FIRST X SECONDS OF STATISTICS*/
-#define MAX_CODED_PAYLOADS 30       /* space in number of packets in the buffer to code*/
+#define MAX_CODED_PAYLOADS 30       /*number of packets in the buffer to code*/
 #define TRIGGERPACKETS 2            /*number of packets that trigger a coded message*/
-#define OBS_REFRESH_INTERVAL 300     /*interval of ack in messages, 1 to allways confirmable*/
-#define MAX_RETRANS 4               /*max number of retransmissions of a single message*/
+#define ACK_INTERVAL 600            /*interval of confirmable messages, 1 means all messages are confirmable*/
 #define COM_ACKS 1                  /*TO ADD HEADER AND FUNCTION DECLARATIONS IN TCPIP*/
 
 /*gilber elliot transition probabilities from 0 to 100*/
-#define GoodToBad 11
+#define GoodToBad 55
 #define BadToGood 45
 
-/*logic, use discarded and coding + iotlab for iotlab, when testing in cooja change flags cooja exp */
-#define NETWORK_CODING 1            /*activates packet capturing and network coding mechanism */
-#define COOJA_EXP 1     /*use this to apply configurations for development in cooja*/
-#define IOTLAB 0        /*reduces power and other stuff for testing in iotlab*/
-#define HARDCODED_TOPOLOGY 0  /*static routing*/
-#define AGGREGATION 1
-#define GILBERT_ELLIOT_DISCARDER 0    /*this macro sends packets to loss model*/
-//#define REQUEST_NODE(ipaddr)   uip_ip6addr(ipaddr, 0x2001, 0x0660, 0x5307, 0x3111, 0, 0, 0 , 0x0001) 
+#define NETWORK_CODING 0              /*activates packet capturing and network coding mechanism */
+#define COOJA_EXP 1                   /*apply configurations for development in cooja*/
+#define IOTLAB 0                      /*activates checks for iotlab*/
+#define HARDCODED_TOPOLOGY 0          /*activates static routing*/
+#define AGGREGATION 1                 /*enable packet aggregation*/
+#define GILBERT_ELLIOT_DISCARDER 1    /*activates discarder*/
 
 #if GILBERT_ELLIOT_DISCARDER
-extern  int local_loss; /*the coded messages can also be lost, count the lost coded messages*/
-extern  int sent_coded; 
+extern  int local_loss; /*number of coded messages lost*/
+extern  int sent_coded; /*number of coded messages sent*/
 #endif
+
 #if IOTLAB
 //#define RPL_UPDATE_INTERVAL 600 //testing in net/rpl/conf
 #if HARDCODED_TOPOLOGY
@@ -114,11 +108,7 @@ extern  int sent_coded;
 
 /*for doing tests in coojs and debugging*/
 # if COOJA_EXP
-#define NODE_3_IP 3
-#define NODE_4_IP 4
-
 //#warning This is being compiled for a cooja experiment scenario
-#define PERIODIC_MESSAGE 0 /*activate periodic resource for auto send coded */
 extern int id_node; /*for cooja tests, used in tcpip*/
 #undef NETSTACK_CONF_RDC
 #define NETSTACK_CONF_RDC              nullrdc_driver 

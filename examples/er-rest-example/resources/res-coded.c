@@ -43,68 +43,65 @@ PERIODIC_RESOURCE(res_coded,
  * Use local resource state that is accessed by res_get_handler() and altered by res_periodic_handler() or PUT or POST.
  */
 static uint16_t event_counter = 0;
-static int seed = 10;
+static int seed = 1;
 static uint8_t temperature = 0;
-static uint8_t rmid=0;
-static int len=0;
-static int extra_packet_len=0; /*we are goint to put the number of extra bytes in the etag, only one payload is suposed to be aggregated, */
-static s_message_t * buff_packet=NULL;
 
+#if AGGREGATION
+  static uint8_t rmid=0;
+  static int len=0;
+  static int extra_packet_len=0; /*we are goint to put the number of extra bytes in the etag, only one payload is suposed to be aggregated, */
+  static s_message_t * buff_packet=NULL;
+#endif
 static void res_get_handler(void *request, void *response, uint8_t *buffer, uint16_t preferred_size, int32_t *offset)
 {
   ++event_counter;
-  /*
-   * For minimal complexity, request query and options should be ignored for GET on observable resources.
-   * Otherwise the requests must be stored with the observer list and passed by REST.notify_subscribers().
-   * This would be a TODO in the corresponding files in contiki/apps/erbium/!
-   */
-  //REST.set_header_content_type(response, REST.type.TEXT_PLAIN);
-  //REST.set_header_max_age(response, res_push.periodic->period / CLOCK_SECOND);
-  static int i=0;
-  static uint8_t packet[COAP_MAX_PACKET_SIZE + 1];
-  static int mid_pointer; // to save pointer to buffer to copy mid
 
   temperature = 10+ random_rand() % 40;
-  if (rank_level > 1)//agrega a mensagem armazenada
-  {
-      //REST.set_header_etag(response, (uint8_t *)&seed, 1);/*this signals the message has been coded*/
-      PRINTF("Temperature = %u\n", temperature);
-      mid_pointer=snprintf((char *)buffer, 10, "%u", temperature);;
-      extra_packet_len=0;
-        //append every message in the buffer
-      len=get_coded_len();
-      for ( i = 0; i < len; ++i){
 
-        buff_packet = (s_message_t *) get_message_pop(); //pop and return all messages
-        extra_packet_len = 2 + extra_packet_len + buff_packet->data_len; //the mid space + the len in bytes of temperature
+  #if AGGREGATION
+    static int i=0;
+    static int mid_pointer; // to save pointer to buffer to copy mid
+    if (rank_level > 1)//agrega a mensagem armazenada
+    {   
+        //REST.set_header_etag(response, (uint8_t *)&seed, 1);/*this signals the message has been coded*/
+        PRINTF("Temperature = %u\n", temperature);
+        mid_pointer=snprintf((char *)buffer, 10, "%u", temperature);;
+        extra_packet_len=0;
+          //append every message in the buffer
+        len=get_coded_len();
+        for ( i = 0; i < len; ++i){
+
+          buff_packet = (s_message_t *) get_message_pop(); //pop and return all messages
+          extra_packet_len = 2 + extra_packet_len + buff_packet->data_len; //the mid space + the len in bytes of temperature
+          
+          rmid =(buff_packet->mid & 0xFF00 ) >>8;
+          //snprintf uses number of characters so each number is 1 byte; do not use, because human readable uses extra space
+          memcpy(buffer+(mid_pointer*sizeof(uint8_t)), &rmid  ,  sizeof(uint8_t));/*apend every mid*/
+          mid_pointer++;
+          rmid = buff_packet->mid & 0x00FF;
+          memcpy(buffer+(mid_pointer*sizeof(uint8_t)), &rmid  ,  sizeof(uint8_t));/*apend every mid*/
+          mid_pointer++;
         
-        rmid =(buff_packet->mid & 0xFF00 ) >>8;
-        //snprintf uses number of characters so each number is 1 byte; do not use, because human readable uses extra space
-        memcpy(buffer+(mid_pointer*sizeof(uint8_t)), &rmid  ,  sizeof(uint8_t));/*apend every mid*/
-        mid_pointer++;
-        rmid = buff_packet->mid & 0x00FF;
-        memcpy(buffer+(mid_pointer*sizeof(uint8_t)), &rmid  ,  sizeof(uint8_t));/*apend every mid*/
-        mid_pointer++;
-        //copiar payload
-        memcpy(buffer+(mid_pointer*sizeof(uint8_t)), buff_packet->data, buff_packet->data_len*sizeof(uint8_t));/*apend every mid*/
-        mid_pointer+=buff_packet->data_len ;
-        free_poped_memb(buff_packet);//free the alocated memory
-      }
-      if(i==0)//NO MESSAGES
-      {
-        i=1;
-      }
-      REST.set_header_etag(response, (uint8_t *)&extra_packet_len, 1);
-      REST.set_response_payload(response, buffer,  mid_pointer*sizeof(uint8_t));
+          memcpy(buffer+(mid_pointer*sizeof(uint8_t)), buff_packet->data, buff_packet->data_len*sizeof(uint8_t));/*apend every mid*/
+          mid_pointer+=buff_packet->data_len ;
+          free_poped_memb(buff_packet);//free the alocated memory
+        }
+        //NO MESSAGES TO AGGREGATE, just send temp
+        if(i==0){
+          i=1;}
+        len=len+1;
+        REST.set_header_etag(response, (uint8_t *)&len, 1);
+        REST.set_response_payload(response, buffer,  mid_pointer*sizeof(uint8_t));
+            printf("temperature=%d\n",temperature );
 
-      //clear the packets'from bufer
-      
-      
-  }
-  else if(rank_level <= 1){
+    }
+    #endif     
+
+   #if !AGGREGATION
     REST.set_header_etag(response, (uint8_t *)&seed, 1);/*this signals the message has been coded*/
     REST.set_response_payload(response, buffer, snprintf((char *)buffer, preferred_size, "%u", temperature));
-  }
+    printf("temperature=%d\n",temperature );
+  #endif
   //printf("tamanho lista =%d\n",get_coded_len() );
       
 }

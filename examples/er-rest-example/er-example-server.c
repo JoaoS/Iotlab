@@ -224,16 +224,16 @@ PROCESS_THREAD(er_example_server, ev, data)
     
     if (etimer_expired(&reset_stats) && dis_flag==0)/*just one execution, add flag or else the condition always executes*/
     {
-      #if NETWORK_CODING
+      #if NETWORK_CODING || AGGREGATION
       free_data();
       #endif
-      coap_clear_all_transactions();/*delete for isolation*/
+      coap_clear_all_transactions();/*delete all open transactions */
+      /*reset statistics variables*/
       count_retrans=0;
       count_ack=0;
       total_coap_sent=0;
       total_forwarded=0;
       total_dropped=0;
-      lostpackets=0;
       dis_flag=1;
       printf("(%d second discard)\n",WARMUP_DISCARD);
       
@@ -245,34 +245,29 @@ PROCESS_THREAD(er_example_server, ev, data)
       }
       #endif
     }
-    
     /*prepare new message and send it to external IP address*/
     #if NETWORK_CODING
-    if (ev == coding_event){
-      //send coded message, located in nconding file
-      //printf("my event\n");
-      send_coded(&res_coded);
-    }
+      if (ev == coding_event){
+        //send coded message, located in nconding file
+        send_coded(&res_coded);
+      }
     #endif
 
-
-    if (etimer_expired(&stats))
-    {
+    if (etimer_expired(&stats)){
       if (total_coap_sent>0){
-        printf("(%d minute)retrans=(%d), confirmed messages=(%d) sent coap messages(include retrans)=(%d) lostpackets(at producers)=(%d)\n"
-        ,WARMUP_DISCARD+300,count_retrans,count_ack,total_coap_sent,lostpackets);
+        printf("(%d second) retrans=(%d), confirmed messages=(%d) sent coap messages(include retrans)=(%d)\n"
+        ,WARMUP_DISCARD+300,count_retrans,count_ack,total_coap_sent);
       }
 
-    #if GILBERT_ELLIOT_DISCARDER
-      printf("total_forwarded=(%d), total_dropped=(%d) ",total_forwarded,total_dropped);
-      for (i = 0; i < ELEMENTS; ++i)
-      {
-        if (loss_array[i]!=0){
-          printf("discarded at node %d=(%d) ",i,loss_array[i]);
-        }
-      }      
-      printf(" local discarded-coded=%d, sent coded=%d\n",local_loss,sent_coded);
-    #endif     
+      #if GILBERT_ELLIOT_DISCARDER
+        printf("total_forwarded=(%d), total_dropped=(%d) ",total_forwarded,total_dropped);
+        for (i = 0; i < ELEMENTS; ++i){
+          if (loss_array[i]!=0){
+            printf("discarded at node %d=(%d) ",i,loss_array[i]);}
+        }      
+        printf(" local discarded-coded=%d, sent coded=%d\n",local_loss,sent_coded);
+      #endif   
+
       etimer_reset(&stats);
     }
 

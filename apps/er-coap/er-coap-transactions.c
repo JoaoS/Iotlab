@@ -65,7 +65,6 @@ static struct process *transaction_handler_process = NULL;
  int count_retrans=0;
  int count_ack=0;
  int total_coap_sent=0;
- int lostpackets=0;
 
 /*---------------------------------------------------------------------------*/
 /*- Internal API ------------------------------------------------------------*/
@@ -137,7 +136,6 @@ coap_send_transaction(coap_transaction_t *t)
       /* handle observers */
       /*densenet do not remove observers, just consider the packet lost*/
       //coap_remove_observer_by_client(&t->addr, t->port);
-      lostpackets++;
       count_ack--; /*this is because a cleared transaction does not always equal a confirmed transaction*/
       coap_clear_transaction(t);
 

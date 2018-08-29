@@ -43,5 +43,10 @@ void send_coded(resource_t *resource);
 void create_xor(void *response, uint8_t *buffer, uint16_t preferred_size);
 void remove_element(s_message_t * o);
 void free_data(void);
+void trigger_message(int num);
+void free_two_data(void);
+void free_poped_memb(s_message_t * o);
+s_message_t * get_message_pop(void);
+
 
 #endif
